@@ -71,7 +71,7 @@ export function PdfEditor() {
       const url = URL.createObjectURL(blob)
       const link = window.document.createElement("a")
       link.href = url
-      link.download = fileName.replace(/\.pdf$/i, "") + "-diedit.pdf"
+      link.download = fileName
       link.click()
       URL.revokeObjectURL(url)
     } catch { setError("PDF gagal diekspor. Coba muat ulang file.") } finally { setBusy(false) }

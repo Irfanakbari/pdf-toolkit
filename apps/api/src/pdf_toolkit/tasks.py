@@ -2,6 +2,7 @@ import json
 import logging
 import shutil
 import uuid
+from pathlib import Path
 
 import dramatiq
 from dramatiq.brokers.redis import RedisBroker
@@ -18,6 +19,12 @@ settings = get_settings()
 dramatiq.set_broker(RedisBroker(url=settings.redis_url))
 storage = Storage(settings.storage_root)
 logger = logging.getLogger(__name__)
+
+
+def output_name(tool: str, original_name: str) -> str:
+    stem = Path(original_name).stem or "hasil"
+    extension = ".zip" if tool == "split" else ".pdf"
+    return f"{stem}{extension}"
 
 
 async def _process(job_id: str) -> None:
@@ -38,7 +45,8 @@ async def _process(job_id: str) -> None:
                 for item in job.files
             ]
             output_dir = storage.directory(job.id, job.created_at, "output")
-            output = output_dir / "hasil.pdf"
+            desired_name = output_name(job.tool, job.files[0]["Name"])
+            output = output_dir / desired_name
             options = dict(job.options)
             secret_path = storage.file(job.id, job.created_at, "work", "protect-options.json")
             if job.tool == "protect":
@@ -50,7 +58,7 @@ async def _process(job_id: str) -> None:
                 merge(inputs, output, options, settings.subprocess_timeout_seconds)
             elif job.tool == "split":
                 parts = split(inputs, output_dir, options, settings.subprocess_timeout_seconds)
-                archive = output_dir / "hasil-split.zip"
+                archive = output_dir / desired_name
                 base = str(archive.with_suffix(""))
                 shutil.make_archive(base, "zip", output_dir)
                 for part in parts:

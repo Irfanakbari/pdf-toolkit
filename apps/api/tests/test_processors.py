@@ -5,6 +5,7 @@ import pytest
 from PIL import Image
 
 from pdf_toolkit.processors.pdf import images_to_pdf, merge, split
+from pdf_toolkit.tasks import output_name
 
 
 def create_pdf(path: Path, pages: int):
@@ -39,6 +40,12 @@ def test_images_to_pdf_normalizes_transparent_png_on_a4(tmp_path):
         assert len(pdf.pages) == 1
         media_box = [float(value) for value in pdf.pages[0].MediaBox]
         assert sorted(media_box[2:]) == pytest.approx([595.28, 841.89], abs=0.1)
+
+
+def test_output_name_preserves_uploaded_basename():
+    assert output_name("image-to-pdf", "photo.png") == "photo.pdf"
+    assert output_name("compress", "report.pdf") == "report.pdf"
+    assert output_name("split", "report.pdf") == "report.zip"
 
 
 def test_images_to_pdf_rejects_decompression_bomb(tmp_path, monkeypatch):

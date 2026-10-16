@@ -1,6 +1,6 @@
 import Link from "next/link"
-import { Box, Button, Container, Flex, Heading, SimpleGrid, Text } from "@chakra-ui/react"
-import { ArrowRight, LockKeyhole, Sparkles } from "lucide-react"
+import { Box, Button, Container, Flex, Heading, Image, SimpleGrid, Text } from "@chakra-ui/react"
+import { ArrowRight, LockKeyhole } from "lucide-react"
 
 import { tools } from "@/lib/tools"
 
@@ -10,20 +10,22 @@ export default function Home() {
       <Box as="header" bg="bg.panel" borderBottomWidth="1px" position="sticky" top="0" zIndex="sticky">
         <Container maxW="7xl" py={{ base: "3", md: "4" }}>
           <Flex align="center" justify="space-between" gap="4">
-            <Flex align="center" gap="3">
-              <Flex
-                align="center"
-                justify="center"
-                bg="teal.solid"
-                color="teal.contrast"
-                boxSize={{ base: "9", md: "10" }}
-                rounded="xl"
-              >
-                <Sparkles size={20} aria-hidden="true" />
-              </Flex>
-              <Heading as="h1" size={{ base: "lg", md: "xl" }}>
-                PDF Toolkit
-              </Heading>
+            <Flex align="center" gap={{ base: "3", md: "4" }} minW="0">
+              <Image
+                src="/brand/vuteq-logo.png"
+                alt="Logo VUTEQ"
+                width={{ base: "28", sm: "32", md: "36" }}
+                height="auto"
+                flexShrink="0"
+              />
+              <Box borderLeftWidth="1px" pl={{ base: "3", md: "4" }} minW="0">
+                <Heading as="h1" fontSize={{ base: "sm", sm: "md", md: "lg" }} lineHeight="short" truncate>
+                  VUTEQ INDONESIA
+                </Heading>
+                <Text color="fg.muted" fontSize={{ base: "xs", md: "sm" }}>
+                  PDF Toolkit
+                </Text>
+              </Box>
             </Flex>
           </Flex>
         </Container>

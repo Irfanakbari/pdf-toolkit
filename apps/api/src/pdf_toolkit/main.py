@@ -2,6 +2,7 @@ import logging
 import uuid
 
 from fastapi import FastAPI, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -39,7 +40,7 @@ async def validation_error(request: Request, exc: RequestValidationError):
                 "Code": "VALIDATION_ERROR",
                 "Message": "Permintaan tidak valid",
                 "CorrelationId": request.state.correlation_id,
-                "Details": exc.errors(),
+                "Details": jsonable_encoder(exc.errors()),
             }
         },
     )

@@ -45,7 +45,7 @@ export function HomeMenu() {
             <Link asChild flexShrink="0" _focusVisible={{ outline: "2px solid", outlineColor: "blue.focusRing" }}>
               <NextLink href="/" aria-label="VUTEQ INDONESIA PDF Toolkit">
                 <Image
-                  src="/brand/vuteq-logo.png"
+                  src="/pdf-tools/brand/vuteq-logo.png"
                   alt="VUTEQ INDONESIA"
                   width={{ base: "28", md: "36" }}
                   height="auto"

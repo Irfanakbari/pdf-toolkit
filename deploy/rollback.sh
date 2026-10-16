@@ -19,7 +19,7 @@ compose=(docker compose --project-directory "$DEPLOY_DIR" --env-file "$ENV_FILE"
 
 for _ in {1..30}; do
   if curl --fail --silent --show-error "http://127.0.0.1:${API_PORT:-8000}/health/ready" >/dev/null \
-    && curl --fail --silent --show-error "http://127.0.0.1:${WEB_PORT:-3000}/health" >/dev/null; then
+    && curl --fail --silent --show-error "http://127.0.0.1:${WEB_PORT:-3000}/pdf-tools/health" >/dev/null; then
     cp "$STATE_DIR/current" "$STATE_DIR/failed" 2>/dev/null || true
     cp "$STATE_DIR/previous" "$STATE_DIR/current"
     echo "Application rollback healthy; database migrations were not downgraded"

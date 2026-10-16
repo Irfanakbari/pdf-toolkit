@@ -30,7 +30,7 @@ printf 'API_IMAGE=%s\nWEB_IMAGE=%s\n' "$API_IMAGE" "$WEB_IMAGE" >"$STATE_DIR/can
 
 for _ in {1..30}; do
   if curl --fail --silent --show-error "http://127.0.0.1:${API_PORT:-8000}/health/ready" >/dev/null \
-    && curl --fail --silent --show-error "http://127.0.0.1:${WEB_PORT:-3000}/health" >/dev/null; then
+    && curl --fail --silent --show-error "http://127.0.0.1:${WEB_PORT:-3000}/pdf-tools/health" >/dev/null; then
     if [[ -f "$STATE_DIR/current" ]]; then cp "$STATE_DIR/current" "$STATE_DIR/previous"; fi
     mv "$STATE_DIR/candidate" "$STATE_DIR/current"
     echo "Deployment healthy: $API_IMAGE $WEB_IMAGE"

@@ -9,7 +9,7 @@ import "./globals.css"
 export const metadata: Metadata = {
   title: "VUTEQ INDONESIA | PDF Toolkit",
   description: "Secure and efficient PDF toolkit by VUTEQ INDONESIA",
-  icons: { icon: "/brand/vuteq-logo.png" },
+  icons: { icon: "/pdf-tools/brand/vuteq-logo.png" },
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

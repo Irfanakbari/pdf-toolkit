@@ -6,7 +6,7 @@ Monorepo Next.js + FastAPI untuk pemrosesan PDF anonim dengan capability token, 
 
 1. Salin `.env.example` ke `.env`, ubah password, dan atur `NAS_HOST_PATH`. Kredensial NAS tidak boleh dimasukkan ke environment aplikasi.
 2. Jalankan `docker compose up --build`.
-3. Buka `http://localhost:3000`; API docs di `http://localhost:8000/api/docs`.
+3. Buka `http://localhost:3000/pdf-tools`; API docs di `http://localhost:8000/api/docs`.
 
 Tanpa Docker: backend memakai `uv sync --project apps/api --dev` dan `uv run --project apps/api pytest apps/api/tests`; frontend memakai `pnpm install` dan `pnpm dev:web`.
 

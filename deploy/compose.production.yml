@@ -10,7 +10,7 @@ x-app: &app
     REDIS_URL: redis://redis:6379/0
     STORAGE_ROOT: /storage
     HOME: /home/app
-    TMPDIR: /tmp/libreoffice
+    TMPDIR: /tmp
   volumes:
     - type: bind
       source: ${NAS_HOST_PATH:?Set NAS_HOST_PATH}

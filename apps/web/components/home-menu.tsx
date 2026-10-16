@@ -15,7 +15,6 @@ import {
   Stack,
   Text,
 } from "@chakra-ui/react"
-import { LockKeyhole } from "lucide-react"
 
 import { tools, type ToolCategory } from "@/lib/tools"
 
@@ -39,7 +38,7 @@ export function HomeMenu() {
   )
 
   return (
-    <Box minH="100dvh" bg="bg.subtle">
+    <Box flex="1" display="flex" flexDirection="column" bg="bg.subtle">
       <Box as="header" bg="bg.panel" borderBottomWidth="1px" position="sticky" top="0" zIndex="sticky">
         <Container maxW="8xl" px={{ base: "4", md: "6", xl: "8" }}>
           <Flex minH={{ base: "16", lg: "18" }} align="center" justify="space-between" gap="6">
@@ -197,12 +196,6 @@ export function HomeMenu() {
                         >
                           <Icon size={25} strokeWidth={2.2} aria-hidden="true" />
                         </Flex>
-                        {tool.local && (
-                          <HStack gap="1" color="purple.fg">
-                            <LockKeyhole size={14} aria-hidden="true" />
-                            <Text fontSize="xs" fontWeight="bold">LOKAL</Text>
-                          </HStack>
-                        )}
                       </Flex>
 
                       <Box>

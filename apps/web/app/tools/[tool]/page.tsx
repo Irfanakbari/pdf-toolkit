@@ -27,7 +27,7 @@ export default async function ToolPage({ params }: { params: Promise<{ tool: str
   if (!tool) notFound()
 
   return (
-    <Box minH="100vh" bg="bg.canvas">
+    <Box flex="1" display="flex" flexDirection="column" bg="bg.canvas">
       <Container maxW={tool.local ? "7xl" : "4xl"} py={{ base: "7", md: "12" }}>
         <Button asChild variant="ghost" mb="8">
           <Link href="/">

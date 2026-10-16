@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { Box } from "@chakra-ui/react"
+import { Box, Flex } from "@chakra-ui/react"
 
 import { Provider } from "@/components/ui/provider"
 import { Footer } from "@/components/footer"
@@ -17,10 +17,20 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="id" suppressHydrationWarning>
       <body>
         <Provider>
-          <Box minH="100dvh" display="flex" flexDirection="column">
-            <Box flex="1">{children}</Box>
+          <Flex direction="column" h="100dvh" maxH="100dvh" overflow="hidden">
+            <Box
+              as="section"
+              id="app-scrollable-content"
+              flex="1"
+              overflowY="auto"
+              display="flex"
+              flexDirection="column"
+              overscrollBehaviorY="contain"
+            >
+              {children}
+            </Box>
             <Footer />
-          </Box>
+          </Flex>
         </Provider>
       </body>
     </html>

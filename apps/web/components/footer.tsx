@@ -7,8 +7,9 @@ export function Footer() {
       borderTopWidth="1px"
       borderColor="border.subtle"
       bg="bg.panel"
-      py={{ base: "4", md: "5" }}
-      mt="auto"
+      py={{ base: "3", md: "3.5" }}
+      flexShrink={0}
+      zIndex="banner"
     >
       <Container maxW="8xl" px={{ base: "4", md: "6", xl: "8" }} textAlign="center">
         <Text

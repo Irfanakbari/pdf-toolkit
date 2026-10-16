@@ -14,9 +14,11 @@ from .database import SessionLocal
 
 settings = get_settings()
 app = FastAPI(title="PDF Toolkit API", version="1.0.0", docs_url="/api/docs")
+cors_origins = [item.strip() for item in settings.cors_origins.split(",") if item.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[item.strip() for item in settings.cors_origins.split(",")],
+    allow_origins=cors_origins,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["Content-Disposition", "X-Correlation-Id"],

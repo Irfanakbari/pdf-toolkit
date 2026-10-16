@@ -12,8 +12,17 @@ type Created = { JobId: string; CapabilityToken: string }
 
 const headers = (token: string) => ({ "X-Capability-Token": token })
 
+async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
+  try {
+    return await fetch(`${base}${path}`, init)
+  } catch (cause) {
+    const detail = cause instanceof Error ? cause.message : "Network connection failed"
+    throw new Error(`Cannot connect to the PDF processing API at ${base}. Check network access and CORS settings. (${detail})`)
+  }
+}
+
 export async function createJob(tool: string): Promise<Created> {
-  const response = await fetch(`${base}/api/v1/jobs`, {
+  const response = await apiFetch("/api/v1/jobs", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ Tool: tool }),
@@ -25,7 +34,7 @@ export async function upload(jobId: string, token: string, file: File) {
   const data = new FormData()
   data.append("file", file)
   return checked(
-    await fetch(`${base}/api/v1/jobs/${jobId}/files`, {
+    await apiFetch(`/api/v1/jobs/${jobId}/files`, {
       method: "POST",
       headers: headers(token),
       body: data,
@@ -35,7 +44,7 @@ export async function upload(jobId: string, token: string, file: File) {
 
 export async function submit(jobId: string, token: string, options: Record<string, string>) {
   return checked(
-    await fetch(`${base}/api/v1/jobs/${jobId}/submit`, {
+    await apiFetch(`/api/v1/jobs/${jobId}/submit`, {
       method: "POST",
       headers: { ...headers(token), "Content-Type": "application/json" },
       body: JSON.stringify({ Options: options }),
@@ -45,7 +54,7 @@ export async function submit(jobId: string, token: string, options: Record<strin
 
 export async function status(jobId: string, token: string): Promise<Job> {
   return checked(
-    await fetch(`${base}/api/v1/jobs/${jobId}`, {
+    await apiFetch(`/api/v1/jobs/${jobId}`, {
       headers: headers(token),
       cache: "no-store",
     }),
@@ -57,7 +66,7 @@ export async function download(
   token: string,
   jobOrFallback?: { OutputName?: string } | string,
 ) {
-  const response = await fetch(`${base}/api/v1/jobs/${jobId}/download`, {
+  const response = await apiFetch(`/api/v1/jobs/${jobId}/download`, {
     headers: headers(token),
   })
   if (!response.ok) throw new Error("Download failed")

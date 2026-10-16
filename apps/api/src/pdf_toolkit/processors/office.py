@@ -3,7 +3,15 @@ from pathlib import Path
 from .common import run_command
 
 
-def docx_to_pdf(source: Path, output_dir: Path, binary: str, timeout: int) -> Path:
+def office_to_pdf(source: Path, output_dir: Path, binary: str, timeout: int) -> Path:
+    ext = source.suffix.lower()
+    if ext in {".xlsx", ".xls", ".ods", ".csv"}:
+        export_filter = "pdf:calc_pdf_Export"
+    elif ext in {".pptx", ".ppt", ".odp"}:
+        export_filter = "pdf:impress_pdf_Export"
+    else:
+        export_filter = "pdf:writer_pdf_Export"
+
     run_command(
         [
             binary,
@@ -12,7 +20,7 @@ def docx_to_pdf(source: Path, output_dir: Path, binary: str, timeout: int) -> Pa
             "--nodefault",
             "--nofirststartwizard",
             "--convert-to",
-            "pdf",
+            export_filter,
             "--outdir",
             str(output_dir),
             str(source),
@@ -22,5 +30,9 @@ def docx_to_pdf(source: Path, output_dir: Path, binary: str, timeout: int) -> Pa
     )
     output = output_dir / f"{source.stem}.pdf"
     if not output.is_file():
-        raise RuntimeError("OFFICE_OUTPUT_MISSING")
+        pdfs = sorted(output_dir.glob("*.pdf"), key=lambda p: p.stat().st_mtime, reverse=True)
+        if pdfs:
+            output = pdfs[0]
+        else:
+            raise RuntimeError("OFFICE_OUTPUT_MISSING")
     return output

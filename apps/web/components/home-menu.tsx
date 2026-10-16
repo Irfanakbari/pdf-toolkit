@@ -28,7 +28,7 @@ const filters: Array<{ value: Filter; label: string }> = [
   { value: "security", label: "PDF Security" },
 ]
 
-const shortcuts = ["organize", "merge", "split", "compress", "pdf-to-jpg"]
+const shortcuts = ["merge", "split", "compress", "excel-to-pdf", "image-to-pdf", "organize"]
 
 export function HomeMenu() {
   const [filter, setFilter] = useState<Filter>("all")

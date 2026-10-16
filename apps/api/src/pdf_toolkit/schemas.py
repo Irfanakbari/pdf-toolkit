@@ -6,7 +6,18 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from .config import ApiModel
 
-TOOLS = {"merge", "split", "image-to-pdf", "docx-to-pdf", "protect", "compress"}
+TOOLS = {
+    "merge",
+    "split",
+    "image-to-pdf",
+    "docx-to-pdf",
+    "excel-to-pdf",
+    "powerpoint-to-pdf",
+    "protect",
+    "unlock",
+    "compress",
+    "grayscale",
+}
 
 
 class Model(BaseModel):

@@ -15,6 +15,7 @@ import {
   SimpleGrid,
   Stack,
   Text,
+  Textarea,
 } from "@chakra-ui/react"
 import { CheckCircle2, Download, FileUp, X } from "lucide-react"
 import type { PDFDocumentProxy } from "pdfjs-dist"
@@ -25,6 +26,7 @@ import {
   convertPdfToJpg,
   deletePdfDocumentPages,
   downloadBlob,
+  extractTextFromPdf,
   formatClientFileName,
   parsePageRanges,
   rotatePdfDocument,
@@ -49,6 +51,7 @@ export function ClientToolWorkspace({
   const [success, setSuccess] = useState("")
   const [progress, setProgress] = useState(0)
   const [progressLabel, setProgressLabel] = useState("")
+  const [extractedText, setExtractedText] = useState("")
 
   // rotate-pdf options
   const [rotateDegrees, setRotateDegrees] = useState<90 | 180 | 270>(90)
@@ -156,10 +159,11 @@ export function ClientToolWorkspace({
     setSuccess("")
     setProgress(0)
     setProgressLabel("")
+    setExtractedText("")
   }
 
   async function handleProcess() {
-    if (!source) return setError("Please select a PDF file first.")
+    if (!source || !pdfDoc) return setError("Please select a PDF file first.")
     setBusy(true)
     setError("")
     setSuccess("")
@@ -223,6 +227,18 @@ export function ClientToolWorkspace({
           downloadBlob(result.zipBlob, downloadName)
           setSuccess(`Converted ${result.totalPages} pages to ZIP successfully. File downloaded as ${downloadName}.`)
         }
+      } else if (tool.slug === "extract-text") {
+        setProgressLabel("Extracting text from pages...")
+        const textContent = await extractTextFromPdf(pdfDoc, (curr, tot) => {
+          setProgress(Math.round((curr / tot) * 90))
+          setProgressLabel(`Extracting page ${curr} of ${tot}...`)
+        })
+        setExtractedText(textContent)
+        const stem = fileName.replace(/\.[^.]+$/, "") || "document"
+        const downloadName = `${stem}.txt`
+        const textBlob = new Blob([textContent], { type: "text/plain;charset=utf-8" })
+        downloadBlob(textBlob, downloadName)
+        setSuccess(`Extracted text successfully. File downloaded as ${downloadName}.`)
       }
       setProgress(100)
     } catch (cause) {
@@ -667,6 +683,37 @@ export function ClientToolWorkspace({
               </Stack>
             )}
 
+            {/* extract-text options */}
+            {tool.slug === "extract-text" && (
+              <Stack gap="4">
+                <Box bg="bg.subtle" p="4" rounded="xl" borderWidth="1px">
+                  <Heading size="xs" mb="2" color="teal.fg">
+                    Plain Text Extraction
+                  </Heading>
+                  <Text fontSize="sm" color="fg.muted">
+                    All text content from {totalPages} pages will be extracted and downloaded as a clean .txt file.
+                  </Text>
+                </Box>
+                {extractedText && (
+                  <Field.Root>
+                    <Field.Label>Extracted Preview</Field.Label>
+                    <Textarea
+                      value={extractedText}
+                      readOnly
+                      rows={8}
+                      p="3"
+                      fontSize="xs"
+                      fontFamily="mono"
+                      rounded="lg"
+                      borderWidth="1px"
+                      bg="bg.muted"
+                      w="full"
+                    />
+                  </Field.Root>
+                )}
+              </Stack>
+            )}
+
             {/* Progress indicator */}
             {busy && (
               <Stack gap="2">
@@ -710,6 +757,7 @@ export function ClientToolWorkspace({
               {tool.slug === "page-numbers" && "Add Numbers & Download PDF"}
               {tool.slug === "watermark" && "Add Watermark & Download PDF"}
               {tool.slug === "pdf-to-jpg" && (totalPages > 1 ? "Convert to ZIP (JPG)" : "Convert to JPG")}
+              {tool.slug === "extract-text" && "Extract & Download Text (.txt)"}
             </Button>
           </Stack>
         </Box>

@@ -29,8 +29,33 @@ ALLOWED = {
     "merge": {"application/pdf"},
     "split": {"application/pdf"},
     "protect": {"application/pdf"},
+    "unlock": {"application/pdf"},
     "compress": {"application/pdf"},
-    "docx-to-pdf": {"application/vnd.openxmlformats-officedocument.wordprocessingml.document"},
+    "grayscale": {"application/pdf"},
+    "docx-to-pdf": {
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/msword",
+        "application/vnd.oasis.opendocument.text",
+        "application/zip",
+        "application/octet-stream",
+    },
+    "excel-to-pdf": {
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/vnd.ms-excel",
+        "application/vnd.oasis.opendocument.spreadsheet",
+        "text/csv",
+        "application/csv",
+        "text/plain",
+        "application/zip",
+        "application/octet-stream",
+    },
+    "powerpoint-to-pdf": {
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        "application/vnd.ms-powerpoint",
+        "application/vnd.oasis.opendocument.presentation",
+        "application/zip",
+        "application/octet-stream",
+    },
     "image-to-pdf": {"image/jpeg", "image/png", "image/webp"},
 }
 
@@ -125,11 +150,12 @@ async def submit(
         )
     options = dict(body.options)
     password = options.pop("Password", None)
-    if job.tool == "protect":
-        if not isinstance(password, str) or not 8 <= len(password) <= 128:
+    if job.tool in {"protect", "unlock"}:
+        min_len = 8 if job.tool == "protect" else 1
+        if not isinstance(password, str) or not min_len <= len(password) <= 128:
             raise HTTPException(
                 422,
-                detail={"Code": "INVALID_PASSWORD", "Message": "Password must be between 8 and 128 characters"},
+                detail={"Code": "INVALID_PASSWORD", "Message": f"Password must be at least {min_len} characters"},
             )
         secret_path = storage.file(job.id, job.created_at, "work", "protect-options.json")
         storage.atomic_write_bytes(
@@ -142,7 +168,7 @@ async def submit(
     job.progress = 5
     session.add(JobLog(job_id=job.id, level="info", event="queued", message="Job queued"))
     await session.commit()
-    (process_office if job.tool == "docx-to-pdf" else process_pdf).send(str(job.id))
+    (process_office if job.tool in {"docx-to-pdf", "excel-to-pdf", "powerpoint-to-pdf"} else process_pdf).send(str(job.id))
     return response(job)
 
 

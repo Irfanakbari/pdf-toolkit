@@ -13,7 +13,7 @@ FROM python:3.13-slim-bookworm AS runtime
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         ca-certificates fonts-dejavu-core fonts-liberation ghostscript libmagic1 \
-        libreoffice-writer qpdf tini \
+        libreoffice-writer libreoffice-calc libreoffice-impress qpdf tini \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --gid 1000 app \
     && useradd --uid 1000 --gid app --create-home --home-dir /home/app app

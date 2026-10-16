@@ -57,3 +57,22 @@ def test_images_to_pdf_rejects_decompression_bomb(tmp_path, monkeypatch):
 
     with pytest.raises(Image.DecompressionBombError):
         images_to_pdf([source], tmp_path / "result.pdf", {"PageSize": "A4"}, 10)
+
+
+def test_protect_and_unlock(tmp_path):
+    source = tmp_path / "plain.pdf"
+    create_pdf(source, 2)
+    protected = tmp_path / "protected.pdf"
+    unlocked = tmp_path / "unlocked.pdf"
+
+    from pdf_toolkit.processors.pdf import protect, unlock
+
+    protect([source], protected, {"Password": "StrongPassword123"}, 10)
+    with pytest.raises(pikepdf.PasswordError):
+        with pikepdf.open(protected):
+            pass
+
+    unlock([protected], unlocked, {"Password": "StrongPassword123"}, 10)
+    with pikepdf.open(unlocked) as pdf:
+        assert len(pdf.pages) == 2
+

@@ -113,3 +113,31 @@ def compress(inputs: list[Path], output: Path, options: dict, timeout: int) -> N
         ],
         timeout,
     )
+
+
+def grayscale(inputs: list[Path], output: Path, options: dict, timeout: int) -> None:
+    run_command(
+        [
+            options["GhostscriptBinary"],
+            "-sDEVICE=pdfwrite",
+            "-dCompatibilityLevel=1.6",
+            "-sColorConversionStrategy=Gray",
+            "-dProcessColorModel=/DeviceGray",
+            "-dNOPAUSE",
+            "-dQUIET",
+            "-dBATCH",
+            f"-sOutputFile={output}",
+            str(inputs[0]),
+        ],
+        timeout,
+    )
+
+
+def unlock(inputs: list[Path], output: Path, options: dict, _: int) -> None:
+    password = str(options.get("Password", ""))
+    try:
+        with pikepdf.open(inputs[0], password=password) as pdf:
+            pdf.save(output)
+    except pikepdf.PasswordError as exc:
+        raise ValueError("INVALID_PASSWORD") from exc
+

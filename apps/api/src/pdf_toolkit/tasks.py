@@ -12,8 +12,8 @@ from sqlalchemy import select
 from .config import get_settings
 from .database import SessionLocal
 from .models import Job, JobLog, JobStatus
-from .processors.office import docx_to_pdf
-from .processors.pdf import compress, images_to_pdf, merge, protect, split
+from .processors.office import office_to_pdf
+from .processors.pdf import compress, grayscale, images_to_pdf, merge, protect, split, unlock
 from .storage import Storage
 
 settings = get_settings()
@@ -52,7 +52,7 @@ async def _process(job_id: str) -> None:
             output = output_dir / desired_name
             options = dict(job.options)
             secret_path = storage.file(job.id, job.created_at, "work", "protect-options.json")
-            if job.tool == "protect":
+            if job.tool in {"protect", "unlock"} and secret_path.is_file():
                 options.update(json.loads(secret_path.read_text(encoding="utf-8")))
             options["GhostscriptBinary"] = settings.ghostscript_binary
             job.progress = 35
@@ -81,10 +81,16 @@ async def _process(job_id: str) -> None:
                 protect(inputs, output, options, settings.subprocess_timeout_seconds)
                 secret_path.unlink(missing_ok=True)
                 options.pop("Password", None)
+            elif job.tool == "unlock":
+                unlock(inputs, output, options, settings.subprocess_timeout_seconds)
+                secret_path.unlink(missing_ok=True)
+                options.pop("Password", None)
             elif job.tool == "compress":
                 compress(inputs, output, options, settings.subprocess_timeout_seconds)
-            elif job.tool == "docx-to-pdf":
-                output = docx_to_pdf(
+            elif job.tool == "grayscale":
+                grayscale(inputs, output, options, settings.subprocess_timeout_seconds)
+            elif job.tool in {"docx-to-pdf", "excel-to-pdf", "powerpoint-to-pdf"}:
+                output = office_to_pdf(
                     inputs[0],
                     output_dir,
                     settings.libreoffice_binary,

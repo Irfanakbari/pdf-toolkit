@@ -1,4 +1,5 @@
 import { degrees, PDFDocument, rgb, StandardFonts } from "pdf-lib"
+import type { PDFDocumentProxy } from "pdfjs-dist"
 
 export function getFileStem(filename: string): string {
   if (!filename) return "document"
@@ -258,3 +259,23 @@ export async function convertPdfToJpg(
   const zipBlob = await zip.generateAsync({ type: "blob" })
   return { zipBlob, totalPages: total }
 }
+
+export async function extractTextFromPdf(
+  doc: PDFDocumentProxy,
+  onProgress?: (current: number, total: number) => void,
+): Promise<string> {
+  const total = doc.numPages
+  const chunks: string[] = []
+  for (let i = 1; i <= total; i++) {
+    const page = await doc.getPage(i)
+    const content = await page.getTextContent()
+    const strings = content.items
+      .map((item) => ("str" in item && typeof item.str === "string" ? item.str : ""))
+      .filter(Boolean)
+      .join(" ")
+    chunks.push(`--- Page ${i} ---\n\n${strings.trim()}`)
+    onProgress?.(i, total)
+  }
+  return chunks.join("\n\n")
+}
+

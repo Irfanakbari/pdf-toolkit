@@ -26,7 +26,7 @@ def split(inputs: list[Path], output_dir: Path, options: dict, _: int) -> list[P
             target = pikepdf.Pdf.new()
             for page in pages:
                 target.pages.append(source.pages[page])
-            destination = output_dir / f"bagian-{index}.pdf"
+            destination = output_dir / f"part-{index}.pdf"
             target.save(destination)
             outputs.append(destination)
     return outputs
@@ -87,7 +87,7 @@ def _normalize_image(source: Path, destination: Path) -> Path:
 def protect(inputs: list[Path], output: Path, options: dict, _: int) -> None:
     password = str(options.get("Password", ""))
     if len(password) < 8 or len(password) > 128:
-        raise ValueError("Password harus 8-128 karakter")
+        raise ValueError("Password must be between 8 and 128 characters")
     with pikepdf.open(inputs[0]) as pdf:
         pdf.save(
             output, encryption=pikepdf.Encryption(owner=password, user=password, R=6, aes=True)
@@ -98,7 +98,7 @@ def compress(inputs: list[Path], output: Path, options: dict, timeout: int) -> N
     preset = options.get("Preset", "balanced")
     profiles = {"screen": "/screen", "balanced": "/ebook", "print": "/printer"}
     if preset not in profiles:
-        raise ValueError("Preset kompresi tidak valid")
+        raise ValueError("Invalid compression preset")
     run_command(
         [
             options["GhostscriptBinary"],

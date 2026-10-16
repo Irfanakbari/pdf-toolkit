@@ -21,11 +21,11 @@ import { tools, type ToolCategory } from "@/lib/tools"
 type Filter = "all" | ToolCategory
 
 const filters: Array<{ value: Filter; label: string }> = [
-  { value: "all", label: "Semua" },
-  { value: "organize", label: "Atur PDF" },
-  { value: "convert", label: "Konversi" },
-  { value: "optimize", label: "Optimasi" },
-  { value: "security", label: "Keamanan" },
+  { value: "all", label: "All Tools" },
+  { value: "organize", label: "Organize PDF" },
+  { value: "convert", label: "Convert PDF" },
+  { value: "optimize", label: "Optimize PDF" },
+  { value: "security", label: "PDF Security" },
 ]
 
 const shortcuts = ["organize", "merge", "split", "compress", "pdf-to-jpg"]
@@ -55,7 +55,7 @@ export function HomeMenu() {
 
             <HStack
               as="nav"
-              aria-label="Tool utama"
+              aria-label="Main tools"
               gap={{ base: "1", lg: "2" }}
               overflowX="auto"
               flex="1"
@@ -87,7 +87,7 @@ export function HomeMenu() {
 
           <HStack
             as="nav"
-            aria-label="Tool utama mobile"
+            aria-label="Main tools mobile"
             gap="1"
             pb="3"
             overflowX="auto"
@@ -127,7 +127,7 @@ export function HomeMenu() {
         >
           <HStack
             role="group"
-            aria-label="Filter kategori tool"
+            aria-label="Tool categories filter"
             gap="2"
             mb={{ base: "5", md: "7" }}
             overflowX="auto"
@@ -169,7 +169,7 @@ export function HomeMenu() {
                   _hover={{ textDecoration: "none" }}
                   _focusVisible={{ outline: "none" }}
                 >
-                  <NextLink href={`/tools/${tool.slug}`} aria-label={`Buka ${tool.title}`}>
+                  <NextLink href={`/tools/${tool.slug}`} aria-label={`Open ${tool.title}`}>
                     <Stack
                       as="article"
                       minH={{ base: "44", md: "56" }}

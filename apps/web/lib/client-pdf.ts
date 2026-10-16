@@ -67,7 +67,7 @@ export async function rotatePdfDocument(
       : parsePageRanges(options.rangeText ?? "", total)
 
   if (targetPages.length === 0) {
-    throw new Error("Pilih minimal satu halaman yang valid untuk diputar.")
+    throw new Error("Select at least one valid page to rotate.")
   }
 
   for (const pageNum of targetPages) {
@@ -88,10 +88,10 @@ export async function deletePdfDocumentPages(
   const pagesToDelete = new Set(parsePageRanges(rangeText, total))
 
   if (pagesToDelete.size === 0) {
-    throw new Error("Masukkan halaman yang ingin dihapus (contoh: 1, 3-5).")
+    throw new Error("Enter pages to delete (e.g., 1, 3-5).")
   }
   if (pagesToDelete.size >= total) {
-    throw new Error("Tidak dapat menghapus semua halaman. Sisakan minimal satu halaman.")
+    throw new Error("Cannot delete all pages. Leave at least one page.")
   }
 
   const keepIndices: number[] = []
@@ -171,7 +171,7 @@ export async function addWatermarkToPdf(
   const font = await doc.embedFont(StandardFonts.HelveticaBold)
   const fontSize = options.fontSize || 48
   const text = options.text.trim()
-  if (!text) throw new Error("Teks watermark tidak boleh kosong.")
+  if (!text) throw new Error("Watermark text cannot be empty.")
 
   const colorMap = {
     gray: rgb(0.45, 0.45, 0.45),
@@ -234,7 +234,7 @@ export async function convertPdfToJpg(
       canvas.toBlob(
         (b) => {
           if (b) resolve(b)
-          else reject(new Error(`Gagal merender halaman ${i}`))
+          else reject(new Error(`Failed to render page ${i}`))
         },
         "image/jpeg",
         0.92,
@@ -252,7 +252,7 @@ export async function convertPdfToJpg(
   const zip = new JSZip()
   for (let i = 0; i < imageBlobs.length; i++) {
     const pad = String(i + 1).padStart(String(total).length, "0")
-    zip.file(`halaman-${pad}.jpg`, imageBlobs[i])
+    zip.file(`page-${pad}.jpg`, imageBlobs[i])
   }
 
   const zipBlob = await zip.generateAsync({ type: "blob" })

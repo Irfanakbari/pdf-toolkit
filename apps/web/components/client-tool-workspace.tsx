@@ -60,7 +60,7 @@ export function ClientToolWorkspace({
 
   // page-numbers options
   const [numberPosition, setNumberPosition] = useState<"bottom-center" | "bottom-right" | "bottom-left">("bottom-center")
-  const [numberFormat, setNumberFormat] = useState("Halaman {n} dari {total}")
+  const [numberFormat, setNumberFormat] = useState("Page {n} of {total}")
   const [numberFontSize, setNumberFontSize] = useState(12)
   const [skipFirstPage, setSkipFirstPage] = useState(false)
   const [startNumber, setStartNumber] = useState(1)
@@ -112,17 +112,17 @@ export function ClientToolWorkspace({
     setSuccess("")
 
     if (file.size > MAX_BYTES) {
-      return setError("Ukuran PDF maksimal 100 MB.")
+      return setError("PDF file size must not exceed 100 MB.")
     }
     if (file.type && file.type !== "application/pdf") {
-      return setError("Pilih file PDF yang valid.")
+      return setError("Please select a valid PDF file.")
     }
 
     setBusy(true)
     try {
       const data = await file.arrayBuffer()
       const magic = new TextDecoder().decode(data.slice(0, 5))
-      if (magic !== "%PDF-") throw new Error("File tidak memiliki struktur PDF yang valid.")
+      if (magic !== "%PDF-") throw new Error("The selected file is not a valid PDF document.")
 
       const pdfjs = await import("pdfjs-dist")
       pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -131,7 +131,7 @@ export function ClientToolWorkspace({
       ).toString()
 
       const loaded = await pdfjs.getDocument({ data: data.slice(0) }).promise
-      if (loaded.numPages > MAX_PAGES) throw new Error("PDF maksimal 300 halaman.")
+      if (loaded.numPages > MAX_PAGES) throw new Error("PDF exceeds maximum limit of 300 pages.")
 
       setPdfDoc(loaded)
       setSource(data)
@@ -139,7 +139,7 @@ export function ClientToolWorkspace({
       setFileSize(file.size)
       setTotalPages(loaded.numPages)
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Gagal membaca file PDF.")
+      setError(cause instanceof Error ? cause.message : "Failed to read PDF file.")
     } finally {
       setBusy(false)
       event.target.value = ""
@@ -159,12 +159,12 @@ export function ClientToolWorkspace({
   }
 
   async function handleProcess() {
-    if (!source) return setError("Silakan pilih file PDF terlebih dahulu.")
+    if (!source) return setError("Please select a PDF file first.")
     setBusy(true)
     setError("")
     setSuccess("")
     setProgress(15)
-    setProgressLabel("Memproses dokumen...")
+    setProgressLabel("Processing document...")
 
     try {
       if (tool.slug === "rotate-pdf") {
@@ -176,13 +176,13 @@ export function ClientToolWorkspace({
         const blob = new Blob([bytes as BlobPart], { type: "application/pdf" })
         const downloadName = formatClientFileName(fileName, "pdf")
         downloadBlob(blob, downloadName)
-        setSuccess(`Berhasil memutar PDF. File diunduh sebagai ${downloadName}.`)
+        setSuccess(`Rotated PDF successfully. File downloaded as ${downloadName}.`)
       } else if (tool.slug === "delete-pages") {
         const bytes = await deletePdfDocumentPages(source, deleteRanges)
         const blob = new Blob([bytes as BlobPart], { type: "application/pdf" })
         const downloadName = formatClientFileName(fileName, "pdf")
         downloadBlob(blob, downloadName)
-        setSuccess(`Berhasil menghapus halaman. File diunduh sebagai ${downloadName}.`)
+        setSuccess(`Deleted pages successfully. File downloaded as ${downloadName}.`)
       } else if (tool.slug === "page-numbers") {
         const bytes = await addPageNumbersToPdf(source, {
           position: numberPosition,
@@ -194,7 +194,7 @@ export function ClientToolWorkspace({
         const blob = new Blob([bytes as BlobPart], { type: "application/pdf" })
         const downloadName = formatClientFileName(fileName, "pdf")
         downloadBlob(blob, downloadName)
-        setSuccess(`Berhasil memberi nomor halaman. File diunduh sebagai ${downloadName}.`)
+        setSuccess(`Added page numbers successfully. File downloaded as ${downloadName}.`)
       } else if (tool.slug === "watermark") {
         const bytes = await addWatermarkToPdf(source, {
           text: watermarkText,
@@ -206,27 +206,27 @@ export function ClientToolWorkspace({
         const blob = new Blob([bytes as BlobPart], { type: "application/pdf" })
         const downloadName = formatClientFileName(fileName, "pdf")
         downloadBlob(blob, downloadName)
-        setSuccess(`Berhasil menambahkan watermark. File diunduh sebagai ${downloadName}.`)
+        setSuccess(`Added watermark successfully. File downloaded as ${downloadName}.`)
       } else if (tool.slug === "pdf-to-jpg") {
-        setProgressLabel("Merender halaman menjadi gambar...")
+        setProgressLabel("Rendering pages to images...")
         const result = await convertPdfToJpg(source, (curr, tot) => {
           setProgress(Math.round((curr / tot) * 90))
-          setProgressLabel(`Merender halaman ${curr} dari ${tot}...`)
+          setProgressLabel(`Rendering page ${curr} of ${tot}...`)
         })
 
         if (result.singleImage) {
           const downloadName = formatClientFileName(fileName, "jpg")
           downloadBlob(result.singleImage, downloadName)
-          setSuccess(`Berhasil mengonversi PDF ke JPG. File diunduh sebagai ${downloadName}.`)
+          setSuccess(`Converted PDF to JPG successfully. File downloaded as ${downloadName}.`)
         } else if (result.zipBlob) {
           const downloadName = formatClientFileName(fileName, "zip")
           downloadBlob(result.zipBlob, downloadName)
-          setSuccess(`Berhasil mengonversi ${result.totalPages} halaman ke ZIP. File diunduh sebagai ${downloadName}.`)
+          setSuccess(`Converted ${result.totalPages} pages to ZIP successfully. File downloaded as ${downloadName}.`)
         }
       }
       setProgress(100)
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Terjadi kesalahan saat memproses file.")
+      setError(cause instanceof Error ? cause.message : "An error occurred while processing the file.")
     } finally {
       setBusy(false)
     }
@@ -250,12 +250,12 @@ export function ClientToolWorkspace({
           gap="3"
         >
           <FileUp size={40} aria-hidden="true" />
-          <Heading size="xl">Pilih file PDF</Heading>
+          <Heading size="xl">Select PDF file</Heading>
           <Text color="fg.muted">
-            Maksimal 100 MB dan 300 halaman. Semua proses berlangsung aman langsung di browser Anda.
+            Maximum 100 MB and 300 pages. Fast and secure client-side processing.
           </Text>
           <Button as="label" colorPalette={tool.colorPalette} cursor="pointer" loading={busy}>
-            Pilih PDF
+            Choose PDF
             <Input
               type="file"
               accept="application/pdf,.pdf"
@@ -295,15 +295,15 @@ export function ClientToolWorkspace({
               {fileName}
             </Text>
             <Badge colorPalette={tool.colorPalette} variant="subtle">
-              {totalPages} Halaman
+              {totalPages} Pages
             </Badge>
           </HStack>
           <Text color="fg.muted" fontSize="xs">
-            Ukuran: {(fileSize / 1024 / 1024).toFixed(2)} MB · Diproses secara lokal
+            Size: {(fileSize / 1024 / 1024).toFixed(2)} MB
           </Text>
         </Stack>
         <Button variant="ghost" size="sm" onClick={resetFile} disabled={busy}>
-          <X size={16} /> Ganti File
+          <X size={16} /> Change File
         </Button>
       </Flex>
 
@@ -321,7 +321,7 @@ export function ClientToolWorkspace({
           gap="3"
         >
           <Text fontSize="sm" fontWeight="semibold" color="fg.muted">
-            Pratinjau Halaman Pertama
+            First Page Preview
           </Text>
           <Box
             minH="220px"
@@ -333,12 +333,12 @@ export function ClientToolWorkspace({
             overflow="hidden"
             p="2"
           >
-            <canvas ref={previewCanvasRef} aria-label="Pratinjau halaman PDF" />
+            <canvas ref={previewCanvasRef} aria-label="PDF page preview" />
           </Box>
           <Text fontSize="xs" color="fg.muted" textAlign="center">
             {tool.slug === "rotate-pdf"
-              ? "Pratinjau rotasi pada halaman pertama"
-              : `Total ${totalPages} halaman terdeteksi`}
+              ? "Rotation preview on first page"
+              : `Total ${totalPages} pages detected`}
           </Text>
         </Box>
 
@@ -346,36 +346,36 @@ export function ClientToolWorkspace({
         <Box gridColumn={{ base: "span 1", md: "span 2" }} bg="bg.panel" borderWidth="1px" rounded="xl" p="6">
           <Stack gap="5">
             <Heading size="md" borderBottomWidth="1px" pb="3">
-              Pengaturan {tool.title}
+              {tool.title} Settings
             </Heading>
 
             {/* rotate-pdf options */}
             {tool.slug === "rotate-pdf" && (
               <Stack gap="4">
                 <Field.Root>
-                  <Field.Label>Sudut Putaran</Field.Label>
+                  <Field.Label>Rotation Angle</Field.Label>
                   <NativeSelect.Root>
                     <NativeSelect.Field
                       value={String(rotateDegrees)}
                       onChange={(e) => setRotateDegrees(Number(e.target.value) as 90 | 180 | 270)}
                     >
-                      <option value="90">90° (Searah jarum jam)</option>
-                      <option value="180">180° (Setengah lingkaran)</option>
-                      <option value="270">270° (90° Berlawanan jarum jam)</option>
+                      <option value="90">90° (Clockwise)</option>
+                      <option value="180">180° (Half turn)</option>
+                      <option value="270">270° (Counter-clockwise)</option>
                     </NativeSelect.Field>
                     <NativeSelect.Indicator />
                   </NativeSelect.Root>
                 </Field.Root>
 
                 <Field.Root>
-                  <Field.Label>Cakupan Halaman</Field.Label>
+                  <Field.Label>Page Scope</Field.Label>
                   <NativeSelect.Root>
                     <NativeSelect.Field
                       value={rotateScope}
                       onChange={(e) => setRotateScope(e.target.value as "all" | "custom")}
                     >
-                      <option value="all">Semua Halaman ({totalPages} halaman)</option>
-                      <option value="custom">Halaman Tertentu Saja</option>
+                      <option value="all">All Pages ({totalPages} pages)</option>
+                      <option value="custom">Selected Pages Only</option>
                     </NativeSelect.Field>
                     <NativeSelect.Indicator />
                   </NativeSelect.Root>
@@ -383,14 +383,14 @@ export function ClientToolWorkspace({
 
                 {rotateScope === "custom" && (
                   <Field.Root>
-                    <Field.Label>Rentang Halaman</Field.Label>
+                    <Field.Label>Page Ranges</Field.Label>
                     <Input
                       value={rotateRanges}
                       onChange={(e) => setRotateRanges(e.target.value)}
-                      placeholder="Contoh: 1-3, 5, 8-"
+                      placeholder="e.g., 1-3, 5, 8-"
                     />
                     <Text fontSize="xs" color="fg.muted" mt="1">
-                      Tentukan nomor halaman yang ingin diputar dipisahkan koma atau tanda hubung (-).
+                      Specify page numbers to rotate separated by commas or hyphens (-).
                     </Text>
                   </Field.Root>
                 )}
@@ -401,21 +401,21 @@ export function ClientToolWorkspace({
             {tool.slug === "delete-pages" && (
               <Stack gap="4">
                 <Field.Root required>
-                  <Field.Label>Rentang Halaman yang Dihapus</Field.Label>
+                  <Field.Label>Pages to Delete</Field.Label>
                   <Input
                     value={deleteRanges}
                     onChange={(e) => setDeleteRanges(e.target.value)}
-                    placeholder="Contoh: 1, 3-5, 8"
+                    placeholder="e.g., 1, 3-5, 8"
                   />
                   <Text fontSize="xs" color="fg.muted" mt="1">
-                    Masukkan nomor atau rentang halaman yang ingin dibuang dari dokumen.
+                    Enter page numbers or ranges to remove from the document.
                   </Text>
                 </Field.Root>
 
                 {/* Quick helpers */}
                 <Stack gap="2">
                   <Text fontSize="xs" fontWeight="semibold" color="fg.muted">
-                    Pintasan Cepat:
+                    Quick Presets:
                   </Text>
                   <Flex wrap="wrap" gap="2">
                     <Button
@@ -423,14 +423,14 @@ export function ClientToolWorkspace({
                       variant="outline"
                       onClick={() => setDeleteRanges("1")}
                     >
-                      Halaman Pertama (1)
+                      First Page (1)
                     </Button>
                     <Button
                       size="xs"
                       variant="outline"
                       onClick={() => setDeleteRanges(String(totalPages))}
                     >
-                      Halaman Terakhir ({totalPages})
+                      Last Page ({totalPages})
                     </Button>
                     {totalPages > 2 && (
                       <>
@@ -442,7 +442,7 @@ export function ClientToolWorkspace({
                             setDeleteRanges(evens.join(", "))
                           }}
                         >
-                          Halaman Genap
+                          Even Pages
                         </Button>
                         <Button
                           size="xs"
@@ -452,7 +452,7 @@ export function ClientToolWorkspace({
                             setDeleteRanges(odds.join(", "))
                           }}
                         >
-                          Halaman Ganjil
+                          Odd Pages
                         </Button>
                       </>
                     )}
@@ -465,11 +465,11 @@ export function ClientToolWorkspace({
                       <Text as="span" fontWeight="bold" color="red.fg">
                         {pagesToDeleteCount}
                       </Text>{" "}
-                      halaman akan dihapus. Tersisa{" "}
+                      page(s) will be deleted.{" "}
                       <Text as="span" fontWeight="bold" color="teal.fg">
                         {Math.max(0, totalPages - pagesToDeleteCount)}
                       </Text>{" "}
-                      halaman.
+                      page(s) remaining.
                     </Text>
                   </Box>
                 )}
@@ -480,7 +480,7 @@ export function ClientToolWorkspace({
             {tool.slug === "page-numbers" && (
               <Stack gap="4">
                 <Field.Root>
-                  <Field.Label>Posisi Nomor Halaman</Field.Label>
+                  <Field.Label>Number Position</Field.Label>
                   <NativeSelect.Root>
                     <NativeSelect.Field
                       value={numberPosition}
@@ -488,25 +488,25 @@ export function ClientToolWorkspace({
                         setNumberPosition(e.target.value as "bottom-center" | "bottom-right" | "bottom-left")
                       }
                     >
-                      <option value="bottom-center">Bawah Tengah (Rekomendasi)</option>
-                      <option value="bottom-right">Bawah Kanan</option>
-                      <option value="bottom-left">Bawah Kiri</option>
+                      <option value="bottom-center">Bottom Center (Recommended)</option>
+                      <option value="bottom-right">Bottom Right</option>
+                      <option value="bottom-left">Bottom Left</option>
                     </NativeSelect.Field>
                     <NativeSelect.Indicator />
                   </NativeSelect.Root>
                 </Field.Root>
 
                 <Field.Root>
-                  <Field.Label>Format Penomoran</Field.Label>
+                  <Field.Label>Numbering Format</Field.Label>
                   <NativeSelect.Root>
                     <NativeSelect.Field
                       value={numberFormat}
                       onChange={(e) => setNumberFormat(e.target.value)}
                     >
-                      <option value="Halaman {n} dari {total}">Halaman 1 dari {totalPages}</option>
+                      <option value="Page {n} of {total}">Page 1 of {totalPages}</option>
                       <option value="{n} / {total}">1 / {totalPages}</option>
-                      <option value="{n}">1, 2, 3... (Angka saja)</option>
-                      <option value="Hal. {n}">Hal. 1</option>
+                      <option value="{n}">1, 2, 3... (Numbers only)</option>
+                      <option value="p. {n}">p. 1</option>
                     </NativeSelect.Field>
                     <NativeSelect.Indicator />
                   </NativeSelect.Root>
@@ -514,30 +514,30 @@ export function ClientToolWorkspace({
 
                 <SimpleGrid columns={{ base: 1, sm: 2 }} gap="4">
                   <Field.Root>
-                    <Field.Label>Ukuran Huruf</Field.Label>
+                    <Field.Label>Font Size</Field.Label>
                     <NativeSelect.Root>
                       <NativeSelect.Field
                         value={String(numberFontSize)}
                         onChange={(e) => setNumberFontSize(Number(e.target.value))}
                       >
-                        <option value="10">10 pt (Kecil)</option>
-                        <option value="12">12 pt (Standar)</option>
-                        <option value="14">14 pt (Besar)</option>
-                        <option value="16">16 pt (Ekstra)</option>
+                        <option value="10">10 pt (Small)</option>
+                        <option value="12">12 pt (Standard)</option>
+                        <option value="14">14 pt (Large)</option>
+                        <option value="16">16 pt (Extra)</option>
                       </NativeSelect.Field>
                       <NativeSelect.Indicator />
                     </NativeSelect.Root>
                   </Field.Root>
 
                   <Field.Root>
-                    <Field.Label>Halaman Sampul</Field.Label>
+                    <Field.Label>Cover Page</Field.Label>
                     <NativeSelect.Root>
                       <NativeSelect.Field
                         value={skipFirstPage ? "skip" : "include"}
                         onChange={(e) => setSkipFirstPage(e.target.value === "skip")}
                       >
-                        <option value="include">Beri nomor semua halaman</option>
-                        <option value="skip">Lewati halaman pertama (Sampul)</option>
+                        <option value="include">Number all pages</option>
+                        <option value="skip">Skip first page (Cover)</option>
                       </NativeSelect.Field>
                       <NativeSelect.Indicator />
                     </NativeSelect.Root>
@@ -545,7 +545,7 @@ export function ClientToolWorkspace({
                 </SimpleGrid>
 
                 <Field.Root>
-                  <Field.Label>Mulai Dari Angka</Field.Label>
+                  <Field.Label>Start at Number</Field.Label>
                   <Input
                     type="number"
                     min="1"
@@ -560,17 +560,17 @@ export function ClientToolWorkspace({
             {tool.slug === "watermark" && (
               <Stack gap="4">
                 <Field.Root required>
-                  <Field.Label>Teks Watermark</Field.Label>
+                  <Field.Label>Watermark Text</Field.Label>
                   <Input
                     value={watermarkText}
                     onChange={(e) => setWatermarkText(e.target.value)}
-                    placeholder="Contoh: CONFIDENTIAL / DRAFT / PT VUTEQ INDONESIA"
+                    placeholder="e.g., CONFIDENTIAL / DRAFT / PT VUTEQ INDONESIA"
                   />
                 </Field.Root>
 
                 {/* Quick text chips */}
                 <Flex wrap="wrap" gap="2">
-                  {["CONFIDENTIAL", "DRAFT", "PT VUTEQ INDONESIA", "RAHASIA"].map((chip) => (
+                  {["CONFIDENTIAL", "DRAFT", "PT VUTEQ INDONESIA", "INTERNAL USE"].map((chip) => (
                     <Button
                       key={chip}
                       size="xs"
@@ -584,32 +584,32 @@ export function ClientToolWorkspace({
 
                 <SimpleGrid columns={{ base: 1, sm: 2 }} gap="4">
                   <Field.Root>
-                    <Field.Label>Sudut Rotasi</Field.Label>
+                    <Field.Label>Rotation Angle</Field.Label>
                     <NativeSelect.Root>
                       <NativeSelect.Field
                         value={String(watermarkRotation)}
                         onChange={(e) => setWatermarkRotation(Number(e.target.value))}
                       >
-                        <option value="45">45° (Diagonal standar)</option>
-                        <option value="0">0° (Horizontal rata)</option>
-                        <option value="-45">-45° (Diagonal terbalik)</option>
-                        <option value="90">90° (Vertikal tegak)</option>
+                        <option value="45">45° (Standard diagonal)</option>
+                        <option value="0">0° (Horizontal flat)</option>
+                        <option value="-45">-45° (Reverse diagonal)</option>
+                        <option value="90">90° (Vertical upright)</option>
                       </NativeSelect.Field>
                       <NativeSelect.Indicator />
                     </NativeSelect.Root>
                   </Field.Root>
 
                   <Field.Root>
-                    <Field.Label>Transparansi (Opasitas)</Field.Label>
+                    <Field.Label>Transparency (Opacity)</Field.Label>
                     <NativeSelect.Root>
                       <NativeSelect.Field
                         value={String(watermarkOpacity)}
                         onChange={(e) => setWatermarkOpacity(Number(e.target.value))}
                       >
-                        <option value="0.15">15% (Sangat Samar)</option>
-                        <option value="0.3">30% (Standar Rekomendasi)</option>
-                        <option value="0.5">50% (Sedang)</option>
-                        <option value="0.7">70% (Tegas)</option>
+                        <option value="0.15">15% (Very faint)</option>
+                        <option value="0.3">30% (Standard recommended)</option>
+                        <option value="0.5">50% (Medium)</option>
+                        <option value="0.7">70% (Solid)</option>
                       </NativeSelect.Field>
                       <NativeSelect.Indicator />
                     </NativeSelect.Root>
@@ -618,31 +618,31 @@ export function ClientToolWorkspace({
 
                 <SimpleGrid columns={{ base: 1, sm: 2 }} gap="4">
                   <Field.Root>
-                    <Field.Label>Ukuran Font</Field.Label>
+                    <Field.Label>Font Size</Field.Label>
                     <NativeSelect.Root>
                       <NativeSelect.Field
                         value={String(watermarkFontSize)}
                         onChange={(e) => setWatermarkFontSize(Number(e.target.value))}
                       >
-                        <option value="32">32 pt (Kecil)</option>
-                        <option value="48">48 pt (Standar)</option>
-                        <option value="64">64 pt (Besar)</option>
-                        <option value="80">80 pt (Sangat Besar)</option>
+                        <option value="32">32 pt (Small)</option>
+                        <option value="48">48 pt (Standard)</option>
+                        <option value="64">64 pt (Large)</option>
+                        <option value="80">80 pt (Extra large)</option>
                       </NativeSelect.Field>
                       <NativeSelect.Indicator />
                     </NativeSelect.Root>
                   </Field.Root>
 
                   <Field.Root>
-                    <Field.Label>Warna Teks</Field.Label>
+                    <Field.Label>Text Color</Field.Label>
                     <NativeSelect.Root>
                       <NativeSelect.Field
                         value={watermarkColor}
                         onChange={(e) => setWatermarkColor(e.target.value as "gray" | "red" | "blue")}
                       >
-                        <option value="gray">Abu-abu (Netral)</option>
-                        <option value="red">Merah (Peringatan)</option>
-                        <option value="blue">Biru (Formal)</option>
+                        <option value="gray">Gray (Neutral)</option>
+                        <option value="red">Red (Notice / Warning)</option>
+                        <option value="blue">Blue (Formal)</option>
                       </NativeSelect.Field>
                       <NativeSelect.Indicator />
                     </NativeSelect.Root>
@@ -656,12 +656,12 @@ export function ClientToolWorkspace({
               <Stack gap="4">
                 <Box bg="bg.subtle" p="4" rounded="xl" borderWidth="1px">
                   <Heading size="xs" mb="2" color="teal.fg">
-                    Format Output Otomatis
+                    Automatic Output Format
                   </Heading>
                   <Text fontSize="sm" color="fg.muted">
                     {totalPages === 1
-                      ? "Dokumen memiliki 1 halaman. Hasil konversi akan diunduh langsung sebagai file gambar JPG berkualitas tinggi."
-                      : `Dokumen memiliki ${totalPages} halaman. Setiap halaman akan dikonversi menjadi file gambar JPG dan dikemas otomatis ke dalam arsip ZIP.`}
+                      ? "The document has 1 page. The image will be downloaded directly as a high-quality JPG file."
+                      : `The document has ${totalPages} pages. Each page will be converted into a JPG image and packaged into a ZIP archive.`}
                   </Text>
                 </Box>
               </Stack>
@@ -671,7 +671,7 @@ export function ClientToolWorkspace({
             {busy && (
               <Stack gap="2">
                 <Flex justify="space-between" fontSize="sm">
-                  <Text fontWeight="medium">{progressLabel || "Sedang memproses..."}</Text>
+                  <Text fontWeight="medium">{progressLabel || "Processing..."}</Text>
                   <Text>{progress}%</Text>
                 </Flex>
                 <Progress.Root value={progress} colorPalette={tool.colorPalette}>
@@ -705,11 +705,11 @@ export function ClientToolWorkspace({
               w="full"
             >
               <Download size={20} />
-              {tool.slug === "rotate-pdf" && "Putar & Unduh PDF"}
-              {tool.slug === "delete-pages" && "Hapus Halaman & Unduh PDF"}
-              {tool.slug === "page-numbers" && "Beri Nomor & Unduh PDF"}
-              {tool.slug === "watermark" && "Tambahkan Watermark & Unduh PDF"}
-              {tool.slug === "pdf-to-jpg" && (totalPages > 1 ? "Konversi ke ZIP (JPG)" : "Konversi ke JPG")}
+              {tool.slug === "rotate-pdf" && "Rotate & Download PDF"}
+              {tool.slug === "delete-pages" && "Delete Pages & Download PDF"}
+              {tool.slug === "page-numbers" && "Add Numbers & Download PDF"}
+              {tool.slug === "watermark" && "Add Watermark & Download PDF"}
+              {tool.slug === "pdf-to-jpg" && (totalPages > 1 ? "Convert to ZIP (JPG)" : "Convert to JPG")}
             </Button>
           </Stack>
         </Box>

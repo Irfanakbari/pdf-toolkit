@@ -20,7 +20,7 @@ class CreateJobRequest(Model):
     @classmethod
     def validate_tool(cls, value: str) -> str:
         if value not in TOOLS:
-            raise ValueError("Tool tidak didukung")
+            raise ValueError("Unsupported tool")
         return value
 
 

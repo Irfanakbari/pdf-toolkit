@@ -39,7 +39,7 @@ async def validation_error(request: Request, exc: RequestValidationError):
         content={
             "Error": {
                 "Code": "VALIDATION_ERROR",
-                "Message": "Permintaan tidak valid",
+                "Message": "Invalid request",
                 "CorrelationId": request.state.correlation_id,
                 "Details": jsonable_encoder(exc.errors()),
             }
@@ -57,7 +57,7 @@ async def unhandled(request: Request, exc: Exception):
         content={
             "Error": {
                 "Code": "INTERNAL_ERROR",
-                "Message": "Terjadi kesalahan internal",
+                "Message": "Internal server error",
                 "CorrelationId": request.state.correlation_id,
             }
         },

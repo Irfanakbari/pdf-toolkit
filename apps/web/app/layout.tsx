@@ -8,13 +8,13 @@ import "./globals.css"
 
 export const metadata: Metadata = {
   title: "VUTEQ INDONESIA | PDF Toolkit",
-  description: "PDF Toolkit VUTEQ INDONESIA",
+  description: "Secure and efficient PDF toolkit by VUTEQ INDONESIA",
   icons: { icon: "/brand/vuteq-logo.png" },
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="id" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body>
         <Provider>
           <Flex direction="column" h="100dvh" maxH="100dvh" overflow="hidden">

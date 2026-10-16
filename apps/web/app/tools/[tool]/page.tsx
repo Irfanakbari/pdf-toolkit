@@ -1,7 +1,7 @@
 import dynamic from "next/dynamic"
 import Link from "next/link"
 import { Box, Button, Container, Heading, Stack, Text } from "@chakra-ui/react"
-import { ArrowLeft, LockKeyhole } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import { notFound } from "next/navigation"
 
 import { ToolWorkspace } from "@/components/tool-workspace"
@@ -9,12 +9,12 @@ import { toolBySlug, tools } from "@/lib/tools"
 
 const PdfEditor = dynamic(
   () => import("@/components/pdf-editor").then((module) => module.PdfEditor),
-  { loading: () => <Text>Memuat editor…</Text> },
+  { loading: () => <Text>Loading editor…</Text> },
 )
 
 const ClientToolWorkspace = dynamic(
   () => import("@/components/client-tool-workspace").then((module) => module.ClientToolWorkspace),
-  { loading: () => <Text>Memuat alat…</Text> },
+  { loading: () => <Text>Loading tool…</Text> },
 )
 
 export function generateStaticParams() {
@@ -31,7 +31,7 @@ export default async function ToolPage({ params }: { params: Promise<{ tool: str
       <Container maxW={tool.local ? "7xl" : "4xl"} py={{ base: "7", md: "12" }}>
         <Button asChild variant="ghost" mb="8">
           <Link href="/">
-            <ArrowLeft /> Semua alat
+            <ArrowLeft /> All Tools
           </Link>
         </Button>
         <Stack gap="3" mb="8">
@@ -44,11 +44,6 @@ export default async function ToolPage({ params }: { params: Promise<{ tool: str
           <Text color="fg.muted" fontSize="lg">
             {tool.description}
           </Text>
-          {tool.local && (
-            <Text display="flex" gap="2" alignItems="center" color="teal.fg" fontWeight="medium">
-              <LockKeyhole size={18} /> Semua proses berlangsung di browser. File Anda tidak diunggah.
-            </Text>
-          )}
         </Stack>
         {tool.local ? (
           tool.slug === "organize" ? (

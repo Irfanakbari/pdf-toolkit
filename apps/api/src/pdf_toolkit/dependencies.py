@@ -22,11 +22,11 @@ async def authorized_job(
         or not verify_capability(x_capability_token, job.token_hash)
     ):
         raise HTTPException(
-            status_code=404, detail={"Code": "JOB_NOT_FOUND", "Message": "Job tidak ditemukan"}
+            status_code=404, detail={"Code": "JOB_NOT_FOUND", "Message": "Job not found"}
         )
     if job.expires_at <= datetime.now(UTC) or job.status == JobStatus.EXPIRED:
         raise HTTPException(
-            status_code=410, detail={"Code": "JOB_EXPIRED", "Message": "Job telah kedaluwarsa"}
+            status_code=410, detail={"Code": "JOB_EXPIRED", "Message": "Job has expired"}
         )
     request.state.job = job
     return job

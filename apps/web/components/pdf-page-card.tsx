@@ -36,16 +36,59 @@ export function PdfPageCard({ page, document, onRotate, onDelete }: {
     return () => { cancelled = true; task?.cancel() }
   }, [document, page.rotation, page.sourceIndex])
 
-  return <Box ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }} opacity={isDragging ? 0.55 : 1} bg="bg.panel" borderWidth="1px" rounded="xl" p="3" shadow="sm">
-    <Box display="flex" justifyContent="space-between" alignItems="center" mb="2">
-      <IconButton {...attributes} {...listeners} aria-label={`Pindahkan halaman ${page.sourceIndex + 1}`} variant="ghost" size="sm"><GripVertical /></IconButton>
-      <Text fontSize="sm" fontWeight="semibold">Halaman {page.sourceIndex + 1}</Text>
-      <IconButton aria-label={`Hapus halaman ${page.sourceIndex + 1}`} variant="ghost" colorPalette="red" size="sm" onClick={() => onDelete(page.id)}><Trash2 /></IconButton>
+  return (
+    <Box
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      opacity={isDragging ? 0.55 : 1}
+      bg="bg.panel"
+      borderWidth="1px"
+      rounded="xl"
+      p="3"
+      shadow="sm"
+    >
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb="2">
+        <IconButton
+          {...attributes}
+          {...listeners}
+          aria-label={`Drag page ${page.sourceIndex + 1}`}
+          variant="ghost"
+          size="sm"
+        >
+          <GripVertical />
+        </IconButton>
+        <Text fontSize="sm" fontWeight="semibold">Page {page.sourceIndex + 1}</Text>
+        <IconButton
+          aria-label={`Delete page ${page.sourceIndex + 1}`}
+          variant="ghost"
+          colorPalette="red"
+          size="sm"
+          onClick={() => onDelete(page.id)}
+        >
+          <Trash2 />
+        </IconButton>
+      </Box>
+      <Box minH="220px" display="grid" placeItems="center" bg="bg.muted" rounded="lg" overflow="hidden">
+        <canvas ref={canvas} aria-label={`Preview page ${page.sourceIndex + 1}`} />
+      </Box>
+      <Box display="flex" justifyContent="center" gap="2" mt="3">
+        <IconButton
+          aria-label={`Rotate page ${page.sourceIndex + 1} counter-clockwise`}
+          variant="outline"
+          size="sm"
+          onClick={() => onRotate(page.id, -90)}
+        >
+          <RotateCcw />
+        </IconButton>
+        <IconButton
+          aria-label={`Rotate page ${page.sourceIndex + 1} clockwise`}
+          variant="outline"
+          size="sm"
+          onClick={() => onRotate(page.id, 90)}
+        >
+          <RotateCw />
+        </IconButton>
+      </Box>
     </Box>
-    <Box minH="220px" display="grid" placeItems="center" bg="bg.muted" rounded="lg" overflow="hidden"><canvas ref={canvas} aria-label={`Pratinjau halaman ${page.sourceIndex + 1}`} /></Box>
-    <Box display="flex" justifyContent="center" gap="2" mt="3">
-      <IconButton aria-label={`Putar halaman ${page.sourceIndex + 1} ke kiri`} variant="outline" size="sm" onClick={() => onRotate(page.id, -90)}><RotateCcw /></IconButton>
-      <IconButton aria-label={`Putar halaman ${page.sourceIndex + 1} ke kanan`} variant="outline" size="sm" onClick={() => onRotate(page.id, 90)}><RotateCw /></IconButton>
-    </Box>
-  </Box>
+  )
 }

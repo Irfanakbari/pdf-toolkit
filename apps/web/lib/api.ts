@@ -60,7 +60,7 @@ export async function download(
   const response = await fetch(`${base}/api/v1/jobs/${jobId}/download`, {
     headers: headers(token),
   })
-  if (!response.ok) throw new Error("Unduhan gagal")
+  if (!response.ok) throw new Error("Download failed")
   const blob = await response.blob()
   const url = URL.createObjectURL(blob)
   const link = document.createElement("a")
@@ -97,7 +97,7 @@ export async function download(
 async function checked(response: Response) {
   const data = await response.json()
   if (!response.ok) {
-    throw new Error(data.Error?.Message ?? data.detail?.Message ?? "Permintaan gagal")
+    throw new Error(data.Error?.Message ?? data.detail?.Message ?? "Request failed")
   }
   return data
 }

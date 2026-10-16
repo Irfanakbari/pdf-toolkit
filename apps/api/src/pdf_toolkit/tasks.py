@@ -91,7 +91,7 @@ async def _process(job_id: str) -> None:
                     settings.subprocess_timeout_seconds,
                 )
             else:
-                raise ValueError("Tool tidak didukung")
+                raise ValueError("Unsupported tool")
             await session.refresh(job)
             if job.status == JobStatus.CANCELLED:
                 output.unlink(missing_ok=True)
@@ -103,7 +103,7 @@ async def _process(job_id: str) -> None:
             job.lease_owner = None
             job.lease_expires_at = None
             session.add(
-                JobLog(job_id=job.id, level="info", event="completed", message="Pemrosesan selesai")
+                JobLog(job_id=job.id, level="info", event="completed", message="Processing completed")
             )
             await session.commit()
         except Exception as exc:
@@ -128,7 +128,7 @@ async def _process(job_id: str) -> None:
                 job.lease_owner = None
                 job.lease_expires_at = None
                 session.add(
-                    JobLog(job_id=job.id, level="error", event="failed", message="Pemrosesan gagal")
+                    JobLog(job_id=job.id, level="error", event="failed", message="Processing failed")
                 )
                 await session.commit()
 

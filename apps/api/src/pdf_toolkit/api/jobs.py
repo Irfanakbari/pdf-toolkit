@@ -67,11 +67,11 @@ async def upload_file(
 ):
     if job.status not in {JobStatus.CREATED, JobStatus.UPLOADING}:
         raise HTTPException(
-            409, detail={"Code": "INVALID_STATE", "Message": "Upload sudah ditutup"}
+            409, detail={"Code": "INVALID_STATE", "Message": "Upload is closed"}
         )
     files = list(job.files)
     if len(files) >= 20:
-        raise HTTPException(413, detail={"Code": "TOO_MANY_FILES", "Message": "Maksimal 20 file"})
+        raise HTTPException(413, detail={"Code": "TOO_MANY_FILES", "Message": "Maximum 20 files allowed"})
     name = secure_name(file.filename or "file")
     stored = f"{uuid.uuid4().hex}_{name}"
     destination = storage.file(job.id, job.created_at, "input", stored)
@@ -80,19 +80,19 @@ async def upload_file(
     upload_limit = min(settings.max_file_bytes, remaining_job_bytes)
     if upload_limit <= 0:
         raise HTTPException(
-            413, detail={"Code": "FILE_TOO_LARGE", "Message": "Ukuran job melampaui batas"}
+            413, detail={"Code": "FILE_TOO_LARGE", "Message": "Job size exceeds limit"}
         )
     try:
         size = storage.atomic_write(destination, file.file, max_bytes=upload_limit)
     except ValueError as exc:
         raise HTTPException(
-            413, detail={"Code": "FILE_TOO_LARGE", "Message": "Ukuran file melampaui batas"}
+            413, detail={"Code": "FILE_TOO_LARGE", "Message": "File size exceeds limit"}
         ) from exc
     mime = magic.from_file(str(destination), mime=True)
     if mime not in ALLOWED[job.tool]:
         destination.unlink(missing_ok=True)
         raise HTTPException(
-            415, detail={"Code": "INVALID_FILE_TYPE", "Message": "Jenis file tidak sesuai"}
+            415, detail={"Code": "INVALID_FILE_TYPE", "Message": "Invalid file type"}
         )
     files.append(
         {
@@ -117,11 +117,11 @@ async def submit(
 ):
     if job.status not in {JobStatus.CREATED, JobStatus.UPLOADING} or not job.files:
         raise HTTPException(
-            409, detail={"Code": "INVALID_STATE", "Message": "Job belum siap dikirim"}
+            409, detail={"Code": "INVALID_STATE", "Message": "Job is not ready to submit"}
         )
     if job.tool == "merge" and len(job.files) < 2:
         raise HTTPException(
-            422, detail={"Code": "FILES_REQUIRED", "Message": "Merge membutuhkan minimal 2 PDF"}
+            422, detail={"Code": "FILES_REQUIRED", "Message": "Merge requires at least 2 PDF files"}
         )
     options = dict(body.options)
     password = options.pop("Password", None)
@@ -129,7 +129,7 @@ async def submit(
         if not isinstance(password, str) or not 8 <= len(password) <= 128:
             raise HTTPException(
                 422,
-                detail={"Code": "INVALID_PASSWORD", "Message": "Password harus 8-128 karakter"},
+                detail={"Code": "INVALID_PASSWORD", "Message": "Password must be between 8 and 128 characters"},
             )
         secret_path = storage.file(job.id, job.created_at, "work", "protect-options.json")
         storage.atomic_write_bytes(
@@ -140,7 +140,7 @@ async def submit(
     job.options = options
     job.status = JobStatus.QUEUED
     job.progress = 5
-    session.add(JobLog(job_id=job.id, level="info", event="queued", message="Job masuk antrean"))
+    session.add(JobLog(job_id=job.id, level="info", event="queued", message="Job queued"))
     await session.commit()
     (process_office if job.tool == "docx-to-pdf" else process_pdf).send(str(job.id))
     return response(job)
@@ -155,21 +155,21 @@ async def get_job(job: Job = Depends(authorized_job)):
 async def cancel(job: Job = Depends(authorized_job), session: AsyncSession = Depends(get_session)):
     if job.status in {JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.EXPIRED}:
         raise HTTPException(
-            409, detail={"Code": "INVALID_STATE", "Message": "Job tidak dapat dibatalkan"}
+            409, detail={"Code": "INVALID_STATE", "Message": "Job cannot be canceled"}
         )
     job.status = JobStatus.CANCELLED
     await session.commit()
-    return MessageResponse(message="Job dibatalkan")
+    return MessageResponse(message="Job canceled")
 
 
 @router.get("/{job_id}/download")
 async def download(job: Job = Depends(authorized_job)):
     if job.status != JobStatus.COMPLETED or not job.output_name:
-        raise HTTPException(409, detail={"Code": "NOT_READY", "Message": "Hasil belum tersedia"})
+        raise HTTPException(409, detail={"Code": "NOT_READY", "Message": "Output is not ready"})
     path = storage.file(job.id, job.created_at, "output", job.output_name)
     if not path.is_file():
         raise HTTPException(
-            404, detail={"Code": "OUTPUT_MISSING", "Message": "Hasil tidak ditemukan"}
+            404, detail={"Code": "OUTPUT_MISSING", "Message": "Output file not found"}
         )
     return FileResponse(
         path,

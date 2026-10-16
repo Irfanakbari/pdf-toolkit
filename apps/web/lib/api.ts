@@ -87,6 +87,12 @@ export async function download(
     chosen = chosen.replace(/\.[^.]+$/, "") + ".zip"
   } else if (contentType.includes("pdf") && !chosen.toLowerCase().endsWith(".pdf")) {
     chosen = chosen.replace(/\.[^.]+$/, "") + ".pdf"
+  } else if (contentType.includes("wordprocessingml") && !chosen.toLowerCase().endsWith(".docx")) {
+    chosen = chosen.replace(/\.[^.]+$/, "") + ".docx"
+  } else if (contentType.includes("spreadsheetml") && !chosen.toLowerCase().endsWith(".xlsx")) {
+    chosen = chosen.replace(/\.[^.]+$/, "") + ".xlsx"
+  } else if (contentType.includes("presentationml") && !chosen.toLowerCase().endsWith(".pptx")) {
+    chosen = chosen.replace(/\.[^.]+$/, "") + ".pptx"
   }
 
   link.download = chosen

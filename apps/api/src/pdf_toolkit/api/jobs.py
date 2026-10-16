@@ -32,6 +32,9 @@ ALLOWED = {
     "unlock": {"application/pdf"},
     "compress": {"application/pdf"},
     "grayscale": {"application/pdf"},
+    "pdf-to-word": {"application/pdf"},
+    "pdf-to-excel": {"application/pdf"},
+    "pdf-to-powerpoint": {"application/pdf"},
     "docx-to-pdf": {
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         "application/msword",
@@ -168,7 +171,10 @@ async def submit(
     job.progress = 5
     session.add(JobLog(job_id=job.id, level="info", event="queued", message="Job queued"))
     await session.commit()
-    (process_office if job.tool in {"docx-to-pdf", "excel-to-pdf", "powerpoint-to-pdf"} else process_pdf).send(str(job.id))
+    (process_office if job.tool in {
+        "docx-to-pdf", "excel-to-pdf", "powerpoint-to-pdf",
+        "pdf-to-word", "pdf-to-excel", "pdf-to-powerpoint",
+    } else process_pdf).send(str(job.id))
     return response(job)
 
 
@@ -197,8 +203,15 @@ async def download(job: Job = Depends(authorized_job)):
         raise HTTPException(
             404, detail={"Code": "OUTPUT_MISSING", "Message": "Output file not found"}
         )
+    media_types = {
+        ".zip": "application/zip",
+        ".pdf": "application/pdf",
+        ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    }
     return FileResponse(
         path,
         filename=job.output_name,
-        media_type="application/zip" if path.suffix == ".zip" else "application/pdf",
+        media_type=media_types.get(path.suffix.lower(), "application/octet-stream"),
     )

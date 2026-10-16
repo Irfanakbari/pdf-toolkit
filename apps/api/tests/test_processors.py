@@ -46,6 +46,9 @@ def test_output_name_preserves_uploaded_basename():
     assert output_name("image-to-pdf", "photo.png") == "photo.pdf"
     assert output_name("compress", "report.pdf") == "report.pdf"
     assert output_name("split", "report.pdf") == "report.zip"
+    assert output_name("pdf-to-word", "report.pdf") == "report.docx"
+    assert output_name("pdf-to-excel", "report.pdf") == "report.xlsx"
+    assert output_name("pdf-to-powerpoint", "report.pdf") == "report.pptx"
     assert output_name("compress", "") == "document.pdf"
     assert output_name("split", "") == "document.zip"
 
@@ -75,4 +78,20 @@ def test_protect_and_unlock(tmp_path):
     unlock([protected], unlocked, {"Password": "StrongPassword123"}, 10)
     with pikepdf.open(unlocked) as pdf:
         assert len(pdf.pages) == 2
+
+
+def test_pdf_to_powerpoint_and_excel(tmp_path):
+    source = tmp_path / "source.pdf"
+    create_pdf(source, 2)
+
+    from pdf_toolkit.processors.reverse import pdf_to_excel, pdf_to_powerpoint
+
+    xlsx = tmp_path / "output.xlsx"
+    pptx = tmp_path / "output.pptx"
+
+    pdf_to_excel(source, xlsx)
+    pdf_to_powerpoint(source, pptx)
+
+    assert xlsx.is_file() and xlsx.stat().st_size > 0
+    assert pptx.is_file() and pptx.stat().st_size > 0
 

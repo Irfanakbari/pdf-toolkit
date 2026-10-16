@@ -17,6 +17,9 @@ TOOLS = {
     "unlock",
     "compress",
     "grayscale",
+    "pdf-to-word",
+    "pdf-to-excel",
+    "pdf-to-powerpoint",
 }
 
 

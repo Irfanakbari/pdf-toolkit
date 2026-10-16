@@ -14,6 +14,7 @@ from .database import SessionLocal
 from .models import Job, JobLog, JobStatus
 from .processors.office import office_to_pdf
 from .processors.pdf import compress, grayscale, images_to_pdf, merge, protect, split, unlock
+from .processors.reverse import pdf_to_excel, pdf_to_powerpoint, pdf_to_word
 from .storage import Storage
 
 settings = get_settings()
@@ -25,8 +26,14 @@ logger = logging.getLogger(__name__)
 def output_name(tool: str, original_name: str) -> str:
     stem = Path(original_name).stem.strip() if original_name else ""
     if not stem:
-        return "document.zip" if tool == "split" else "document.pdf"
-    extension = ".zip" if tool == "split" else ".pdf"
+        stem = "document"
+    ext_map = {
+        "split": ".zip",
+        "pdf-to-word": ".docx",
+        "pdf-to-excel": ".xlsx",
+        "pdf-to-powerpoint": ".pptx",
+    }
+    extension = ext_map.get(tool, ".pdf")
     return f"{stem}{extension}"
 
 
@@ -96,6 +103,12 @@ async def _process(job_id: str) -> None:
                     settings.libreoffice_binary,
                     settings.subprocess_timeout_seconds,
                 )
+            elif job.tool == "pdf-to-word":
+                pdf_to_word(inputs[0], output)
+            elif job.tool == "pdf-to-excel":
+                pdf_to_excel(inputs[0], output)
+            elif job.tool == "pdf-to-powerpoint":
+                pdf_to_powerpoint(inputs[0], output)
             else:
                 raise ValueError("Unsupported tool")
             await session.refresh(job)

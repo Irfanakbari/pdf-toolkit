@@ -27,7 +27,6 @@ status = postgresql.ENUM(
 
 
 def upgrade():
-    status.create(op.get_bind())
     op.create_table(
         "jobs",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),

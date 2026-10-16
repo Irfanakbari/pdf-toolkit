@@ -6,7 +6,7 @@ import { ArrowDown, ArrowUp, FileUp, X } from "lucide-react"
 import { createJob, download, status, submit, upload } from "@/lib/api"
 import type { Tool } from "@/lib/tools"
 
-export function ToolWorkspace({ tool }: { tool: Omit<Tool, "icon"> }) {
+export function ToolWorkspace({ tool }: { tool: Pick<Tool, "slug" | "title" | "description" | "accept" | "multiple" | "option" | "local"> }) {
   const [files, setFiles] = useState<File[]>([])
   const [option, setOption] = useState("")
   const [job, setJob] = useState<{ id: string; token: string }>()

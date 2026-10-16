@@ -1,15 +1,92 @@
 import Link from "next/link"
-import { Box, Button, Container, Flex, Heading, SimpleGrid, Stack, Text } from "@chakra-ui/react"
-import { ArrowRight, LockKeyhole, ShieldCheck, Sparkles } from "lucide-react"
+import { Box, Button, Container, Flex, Heading, SimpleGrid, Text } from "@chakra-ui/react"
+import { ArrowRight, LockKeyhole, Sparkles } from "lucide-react"
+
 import { tools } from "@/lib/tools"
 
 export default function Home() {
-  return <Box minH="100vh" bg="bg.canvas">
-    <Box as="header" borderBottomWidth="1px" bg="bg.panel"><Container maxW="7xl" py="4"><Flex justify="space-between" align="center"><Flex align="center" gap="3"><Box bg="teal.solid" color="teal.contrast" p="2" rounded="lg"><Sparkles size={20} /></Box><Heading size="xl">PDF Toolkit</Heading></Flex><Text display={{ base: "none", md: "block" }} color="fg.muted">Cepat, aman, dan mudah digunakan</Text></Flex></Container></Box>
-    <Box as="main">
-      <Box bgGradient="to-br" gradientFrom="teal.subtle" gradientTo="bg.canvas"><Container maxW="7xl" py={{ base: "16", md: "28" }}><Stack gap="6" maxW="4xl"><Text color="teal.fg" fontWeight="bold" letterSpacing="widest">ALAT PDF UNTUK SEMUA</Text><Heading as="h1" fontSize={{ base: "4xl", md: "6xl" }} lineHeight="1.05" letterSpacing="tight">Dokumen rapi, pekerjaan selesai lebih cepat.</Heading><Text fontSize={{ base: "lg", md: "xl" }} color="fg.muted" maxW="2xl">Gabungkan, konversi, kompres, lindungi, atau atur halaman PDF dengan pengalaman yang sederhana dan transparan.</Text><Button asChild alignSelf="start" colorPalette="teal" size="lg"><Link href="/tools/organize">Edit PDF di browser <ArrowRight /></Link></Button></Stack></Container></Box>
-      <Container maxW="7xl" py={{ base: "12", md: "20" }}><Stack gap="3" mb="9"><Text color="teal.fg" fontWeight="bold">PILIH ALAT</Text><Heading as="h2" size="3xl">Semua yang Anda perlukan</Heading></Stack><SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} gap="5">{tools.map((tool) => { const Icon = tool.icon; return <Box as="article" key={tool.slug} bg="bg.panel" borderWidth="1px" rounded="2xl" p="6" shadow="sm" _hover={{ shadow: "md", borderColor: "teal.300" }} transition="all 0.2s"><Flex justify="space-between" align="start"><Box p="3" bg="teal.subtle" color="teal.fg" rounded="xl"><Icon size={24} aria-hidden="true" /></Box>{tool.local && <Text fontSize="xs" fontWeight="bold" color="teal.fg">100% LOKAL</Text>}</Flex><Heading as="h3" size="lg" mt="5">{tool.title}</Heading><Text color="fg.muted" mt="2" minH="12">{tool.description}</Text><Button asChild variant="outline" colorPalette="teal" width="full" mt="6"><Link href={`/tools/${tool.slug}`}>Buka alat <ArrowRight /></Link></Button></Box>})}</SimpleGrid></Container>
-      <Box as="section" bg="bg.subtle" borderYWidth="1px"><Container maxW="7xl" py={{ base: "12", md: "16" }}><SimpleGrid columns={{ base: 1, md: 2 }} gap="8"><Flex gap="4"><ShieldCheck color="var(--chakra-colors-teal-fg)" aria-hidden="true" /><Stack gap="1"><Heading as="h2" size="lg">Privasi sejak awal</Heading><Text color="fg.muted">Editor halaman bekerja sepenuhnya di perangkat Anda tanpa unggahan.</Text></Stack></Flex><Flex gap="4"><LockKeyhole color="var(--chakra-colors-teal-fg)" aria-hidden="true" /><Stack gap="1"><Heading as="h2" size="lg">Penyimpanan sementara</Heading><Text color="fg.muted">Untuk alat server, file disimpan privat dan dihapus otomatis setelah 24 jam.</Text></Stack></Flex></SimpleGrid></Container></Box>
+  return (
+    <Box minH="100dvh" bg="bg.canvas">
+      <Box as="header" bg="bg.panel" borderBottomWidth="1px" position="sticky" top="0" zIndex="sticky">
+        <Container maxW="7xl" py={{ base: "3", md: "4" }}>
+          <Flex align="center" justify="space-between" gap="4">
+            <Flex align="center" gap="3">
+              <Flex
+                align="center"
+                justify="center"
+                bg="teal.solid"
+                color="teal.contrast"
+                boxSize={{ base: "9", md: "10" }}
+                rounded="xl"
+              >
+                <Sparkles size={20} aria-hidden="true" />
+              </Flex>
+              <Heading as="h1" size={{ base: "lg", md: "xl" }}>
+                PDF Toolkit
+              </Heading>
+            </Flex>
+          </Flex>
+        </Container>
+      </Box>
+
+      <Box as="main">
+        <Container maxW="7xl" py={{ base: "5", sm: "7", md: "10" }}>
+          <SimpleGrid columns={{ base: 1, sm: 2, lg: 3, xl: 4 }} gap={{ base: "3", md: "5" }}>
+            {tools.map((tool) => {
+              const Icon = tool.icon
+
+              return (
+                <Flex
+                  as="article"
+                  key={tool.slug}
+                  direction="column"
+                  minH={{ base: "44", md: "52" }}
+                  bg="bg.panel"
+                  borderWidth="1px"
+                  rounded={{ base: "xl", md: "2xl" }}
+                  p={{ base: "4", md: "5" }}
+                  shadow="sm"
+                  transition="border-color 0.2s, box-shadow 0.2s, transform 0.2s"
+                  _hover={{ borderColor: "teal.400", shadow: "md", transform: "translateY(-2px)" }}
+                  _focusWithin={{ borderColor: "teal.500", ring: "2px", ringColor: "teal.focusRing" }}
+                >
+                  <Flex align="start" justify="space-between" gap="3">
+                    <Flex
+                      align="center"
+                      justify="center"
+                      boxSize={{ base: "11", md: "12" }}
+                      bg="teal.subtle"
+                      color="teal.fg"
+                      rounded="xl"
+                    >
+                      <Icon size={24} aria-hidden="true" />
+                    </Flex>
+                    {tool.local && (
+                      <Flex align="center" gap="1" color="teal.fg">
+                        <LockKeyhole size={14} aria-hidden="true" />
+                        <Text fontSize="xs" fontWeight="bold">
+                          LOKAL
+                        </Text>
+                      </Flex>
+                    )}
+                  </Flex>
+
+                  <Heading as="h2" size={{ base: "md", md: "lg" }} mt="4" mb="4">
+                    {tool.title}
+                  </Heading>
+
+                  <Button asChild variant="ghost" colorPalette="teal" mt="auto" justifyContent="space-between" px="0">
+                    <Link href={`/tools/${tool.slug}`} aria-label={`Buka ${tool.title}`}>
+                      Buka
+                      <ArrowRight aria-hidden="true" />
+                    </Link>
+                  </Button>
+                </Flex>
+              )
+            })}
+          </SimpleGrid>
+        </Container>
+      </Box>
     </Box>
-  </Box>
+  )
 }

@@ -23,8 +23,8 @@ flock -n 9 || { echo "Another deployment is running" >&2; exit 1; }
 compose=(docker compose --project-directory "$DEPLOY_DIR" --env-file "$ENV_FILE" -f "$COMPOSE_FILE")
 export API_IMAGE WEB_IMAGE
 printf 'API_IMAGE=%s\nWEB_IMAGE=%s\n' "$API_IMAGE" "$WEB_IMAGE" >"$STATE_DIR/candidate"
-"${compose[@]}" pull postgres redis api worker-pdf worker-office cleanup web
-"${compose[@]}" up -d postgres redis
+"${compose[@]}" pull redis api worker-pdf worker-office cleanup web
+"${compose[@]}" up -d redis
 "${compose[@]}" run --rm migrate
 "${compose[@]}" up -d --remove-orphans api worker-pdf worker-office cleanup web
 

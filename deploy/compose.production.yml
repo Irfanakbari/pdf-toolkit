@@ -6,7 +6,7 @@ x-app: &app
     - path: .env.production
       required: false
   environment:
-    DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL to the external PostgreSQL database}
     REDIS_URL: redis://redis:6379/0
     STORAGE_ROOT: /storage
     HOME: /home/app
@@ -24,34 +24,10 @@ x-app: &app
   tmpfs:
     - /tmp:rw,noexec,nosuid,nodev,size=1g,uid=1000,gid=1000,mode=1777
   depends_on:
-    postgres:
-      condition: service_healthy
     redis:
       condition: service_healthy
 
 services:
-  postgres:
-    image: postgres:17.6-alpine@sha256:747d5ed1fdeeb124b880fbe3d7c6557d2c4064ae41d6b6297d417882effce4be
-    env_file:
-      - path: .env.production
-        required: false
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    healthcheck:
-      test: [CMD-SHELL, "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-    mem_limit: 1g
-    cpus: 1.0
-
   redis:
     image: redis:7.4.5-alpine@sha256:0302cccee2b2043e61b497c8f4075467c5f7ba27a9f38be7e092634f2734baed
     command: [redis-server, --appendonly, "yes", --maxmemory, 384mb, --maxmemory-policy, noeviction]
@@ -154,5 +130,4 @@ services:
     cpus: 0.5
 
 volumes:
-  postgres_data:
   redis_data:

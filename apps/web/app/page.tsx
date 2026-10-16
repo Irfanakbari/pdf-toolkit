@@ -1,0 +1,7 @@
+import Link from "next/link"
+import { Box, Button, Container, Flex, Heading, SimpleGrid, Stack, Text } from "@chakra-ui/react"
+import { tools } from "@/lib/tools"
+
+export default function Home() {
+  return <Box minH="100vh"><Box as="header" borderBottomWidth="1px" bg="white"><Container maxW="6xl" py="5"><Flex justify="space-between" align="center"><Heading size="xl" color="teal.700">PDF Toolkit</Heading><Text color="fg.muted">Privat • Otomatis terhapus 24 jam</Text></Flex></Container></Box><Container maxW="6xl" py={{ base: "14", md: "24" }}><Stack gap="5" maxW="3xl"><Text color="teal.600" fontWeight="bold" letterSpacing="wide">ALAT DOKUMEN ONLINE</Text><Heading as="h1" size={{ base: "4xl", md: "6xl" }} letterSpacing="tight">Kelola dokumen tanpa kerumitan.</Heading><Text fontSize="xl" color="fg.muted">Pilih alat, unggah file, dan dapatkan hasil. File diproses di penyimpanan privat dan kedaluwarsa otomatis.</Text></Stack><SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} gap="5" mt="12">{tools.map((tool, index) => <Box as="article" key={tool.slug} bg="white" borderWidth="1px" rounded="2xl" p="6" shadow="sm"><Text color="teal.600" fontWeight="bold">0{index + 1}</Text><Heading as="h2" size="lg" mt="3">{tool.title}</Heading><Text color="fg.muted" mt="2" minH="12">{tool.description}</Text><Button asChild colorPalette="teal" width="full" mt="6"><Link href={`/tools/${tool.slug}`}>Mulai sekarang</Link></Button></Box>)}</SimpleGrid></Container></Box>
+}

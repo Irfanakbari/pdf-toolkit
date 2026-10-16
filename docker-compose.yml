@@ -1,0 +1,70 @@
+x-api: &api
+  build:
+    context: .
+    dockerfile: apps/api/Dockerfile
+  env_file:
+    - path: .env
+      required: false
+  environment:
+    DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    REDIS_URL: redis://redis:6379/0
+    STORAGE_ROOT: ${STORAGE_ROOT:-/storage}
+  volumes:
+    - ${NAS_HOST_PATH:?Set NAS_HOST_PATH}:${STORAGE_ROOT:-/storage}
+  depends_on:
+    postgres: { condition: service_healthy }
+    redis: { condition: service_healthy }
+  restart: unless-stopped
+  init: true
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    restart: unless-stopped
+    healthcheck: { test: [CMD-SHELL, "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"], interval: 5s, timeout: 5s, retries: 12 }
+  redis:
+    image: redis:7-alpine
+    command: [redis-server, --appendonly, "yes"]
+    volumes: [redis_data:/data]
+    restart: unless-stopped
+    healthcheck: { test: [CMD, redis-cli, ping], interval: 5s, timeout: 3s, retries: 12 }
+  migrate:
+    <<: *api
+    command: [alembic, upgrade, head]
+    restart: "no"
+  api:
+    <<: *api
+    ports: ["127.0.0.1:8000:8000"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+    healthcheck: { test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/live')"], interval: 10s, timeout: 3s, retries: 10 }
+  worker-pdf:
+    <<: *api
+    command: [dramatiq, pdf_toolkit.tasks, --queues, pdf, --processes, "2", --threads, "1"]
+    depends_on: { migrate: { condition: service_completed_successfully } }
+  worker-office:
+    <<: *api
+    command: [dramatiq, pdf_toolkit.tasks, --queues, office, --processes, "1", --threads, "1"]
+    depends_on: { migrate: { condition: service_completed_successfully } }
+  cleanup:
+    <<: *api
+    command: [python, -m, pdf_toolkit.cleanup]
+    depends_on: { migrate: { condition: service_completed_successfully } }
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args: { NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-http://localhost:8000}" }
+    ports: ["127.0.0.1:3000:3000"]
+    depends_on: { api: { condition: service_healthy } }
+    restart: unless-stopped
+    init: true
+    healthcheck: { test: [CMD, wget, -q, -O, /dev/null, "http://localhost:3000/health"], interval: 10s, timeout: 3s, retries: 10 }
+volumes:
+  postgres_data:
+  redis_data:

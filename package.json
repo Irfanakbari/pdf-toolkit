@@ -1,0 +1,12 @@
+{
+  "name": "pdf-toolkit",
+  "private": true,
+  "packageManager": "pnpm@11.15.0",
+  "scripts": {
+    "dev:web": "pnpm --filter @pdf-toolkit/web dev",
+    "build": "pnpm --filter @pdf-toolkit/web build",
+    "lint": "pnpm --filter @pdf-toolkit/web lint",
+    "typecheck": "pnpm --filter @pdf-toolkit/web typecheck",
+    "test": "uv run --project apps/api pytest apps/api/tests"
+  }
+}

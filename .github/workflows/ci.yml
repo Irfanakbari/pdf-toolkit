@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.9.5"
+          enable-cache: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: uv sync --project apps/api --locked --dev
+      - run: uv run --project apps/api ruff check apps/api
+      - run: uv run --project apps/api pytest apps/api/tests
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.15.0
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm build
+        env:
+          NEXT_PUBLIC_API_URL: http://10.10.10.110:8000
+
+  compose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cp .env.example .env
+      - run: docker compose config --quiet
+        env:
+          NAS_HOST_PATH: /tmp/pdf-toolkit
+          POSTGRES_DB: pdf_toolkit
+          POSTGRES_USER: pdf
+          POSTGRES_PASSWORD: ci-only
+      - run: cp deploy/.env.production.example deploy/.env.production
+      - run: docker compose --env-file deploy/.env.production -f deploy/compose.production.yml config --quiet

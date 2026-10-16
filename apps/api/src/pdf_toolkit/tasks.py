@@ -97,12 +97,15 @@ async def _process(job_id: str) -> None:
             elif job.tool == "grayscale":
                 grayscale(inputs, output, options, settings.subprocess_timeout_seconds)
             elif job.tool in {"docx-to-pdf", "excel-to-pdf", "powerpoint-to-pdf"}:
-                output = office_to_pdf(
+                converted_output = office_to_pdf(
                     inputs[0],
                     output_dir,
                     settings.libreoffice_binary,
                     settings.subprocess_timeout_seconds,
                 )
+                output = output_dir / desired_name
+                if converted_output != output:
+                    os.replace(converted_output, output)
             elif job.tool == "pdf-to-word":
                 pdf_to_word(inputs[0], output)
             elif job.tool == "pdf-to-excel":

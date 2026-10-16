@@ -1,6 +1,8 @@
 import type { Metadata } from "next"
+import { Box } from "@chakra-ui/react"
 
 import { Provider } from "@/components/ui/provider"
+import { Footer } from "@/components/footer"
 
 import "./globals.css"
 
@@ -14,7 +16,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="id" suppressHydrationWarning>
       <body>
-        <Provider>{children}</Provider>
+        <Provider>
+          <Box minH="100dvh" display="flex" flexDirection="column">
+            <Box flex="1">{children}</Box>
+            <Footer />
+          </Box>
+        </Provider>
       </body>
     </html>
   )

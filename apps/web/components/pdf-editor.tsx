@@ -8,6 +8,7 @@ import { Download, FileUp, RotateCcw, Undo2 } from "lucide-react"
 import { degrees, PDFDocument } from "pdf-lib"
 import type { PDFDocumentProxy } from "pdfjs-dist"
 import { PdfPageCard } from "@/components/pdf-page-card"
+import { formatClientFileName } from "@/lib/client-pdf"
 import { editorReducer, initialEditorState } from "@/lib/pdf-editor"
 
 const MAX_BYTES = 100 * 1024 * 1024
@@ -71,7 +72,7 @@ export function PdfEditor() {
       const url = URL.createObjectURL(blob)
       const link = window.document.createElement("a")
       link.href = url
-      link.download = fileName
+      link.download = formatClientFileName(fileName, "pdf")
       link.click()
       URL.revokeObjectURL(url)
     } catch { setError("PDF gagal diekspor. Coba muat ulang file.") } finally { setBusy(false) }

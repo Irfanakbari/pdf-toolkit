@@ -19,6 +19,7 @@ app.add_middleware(
     allow_origins=[item.strip() for item in settings.cors_origins.split(",")],
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Content-Disposition", "X-Correlation-Id"],
 )
 app.include_router(jobs_router)
 

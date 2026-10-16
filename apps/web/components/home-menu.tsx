@@ -29,7 +29,7 @@ const filters: Array<{ value: Filter; label: string }> = [
   { value: "security", label: "Keamanan" },
 ]
 
-const shortcuts = ["merge", "split", "compress", "image-to-pdf"]
+const shortcuts = ["organize", "merge", "split", "compress", "pdf-to-jpg"]
 
 export function HomeMenu() {
   const [filter, setFilter] = useState<Filter>("all")

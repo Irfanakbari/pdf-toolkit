@@ -1,7 +1,8 @@
 import json
 import logging
-import shutil
+import os
 import uuid
+import zipfile
 from pathlib import Path
 
 import dramatiq
@@ -22,7 +23,9 @@ logger = logging.getLogger(__name__)
 
 
 def output_name(tool: str, original_name: str) -> str:
-    stem = Path(original_name).stem or "hasil"
+    stem = Path(original_name).stem.strip() if original_name else ""
+    if not stem:
+        return "document.zip" if tool == "split" else "document.pdf"
     extension = ".zip" if tool == "split" else ".pdf"
     return f"{stem}{extension}"
 
@@ -57,13 +60,21 @@ async def _process(job_id: str) -> None:
             if job.tool == "merge":
                 merge(inputs, output, options, settings.subprocess_timeout_seconds)
             elif job.tool == "split":
+                stem = Path(job.files[0]["Name"]).stem.strip() or "document"
                 parts = split(inputs, output_dir, options, settings.subprocess_timeout_seconds)
-                archive = output_dir / desired_name
-                base = str(archive.with_suffix(""))
-                shutil.make_archive(base, "zip", output_dir)
-                for part in parts:
-                    part.unlink(missing_ok=True)
-                output = archive
+                if len(parts) == 1:
+                    output = output_dir / f"{stem}.pdf"
+                    if parts[0] != output:
+                        os.replace(parts[0], output)
+                else:
+                    output = output_dir / f"{stem}.zip"
+                    temp_zip = output_dir / f".{uuid.uuid4().hex}.zip"
+                    with zipfile.ZipFile(temp_zip, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+                        for idx, part in enumerate(parts, 1):
+                            zf.write(part, arcname=f"{stem}-{idx}.pdf")
+                    for part in parts:
+                        part.unlink(missing_ok=True)
+                    os.replace(temp_zip, output)
             elif job.tool == "image-to-pdf":
                 images_to_pdf(inputs, output, options, settings.subprocess_timeout_seconds)
             elif job.tool == "protect":

@@ -46,6 +46,8 @@ def test_output_name_preserves_uploaded_basename():
     assert output_name("image-to-pdf", "photo.png") == "photo.pdf"
     assert output_name("compress", "report.pdf") == "report.pdf"
     assert output_name("split", "report.pdf") == "report.zip"
+    assert output_name("compress", "") == "document.pdf"
+    assert output_name("split", "") == "document.zip"
 
 
 def test_images_to_pdf_rejects_decompression_bomb(tmp_path, monkeypatch):

@@ -9,7 +9,7 @@ import type { Tool } from "@/lib/tools"
 export function ToolWorkspace({ tool }: { tool: Pick<Tool, "slug" | "title" | "description" | "accept" | "multiple" | "option" | "local"> }) {
   const [files, setFiles] = useState<File[]>([])
   const [option, setOption] = useState("")
-  const [job, setJob] = useState<{ id: string; token: string }>()
+  const [job, setJob] = useState<{ id: string; token: string; outputName?: string }>()
   const [state, setState] = useState("Siap")
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState("")
@@ -22,6 +22,9 @@ export function ToolWorkspace({ tool }: { tool: Pick<Tool, "slug" | "title" | "d
         const current = await status(job.id, job.token)
         setState(current.Status)
         setProgress(current.Progress)
+        if (current.OutputName) {
+          setJob((prev) => (prev ? { ...prev, outputName: current.OutputName } : prev))
+        }
         if (current.Status === "Failed") setError(`Pemrosesan gagal (${current.ErrorCode ?? "unknown"})`)
       } catch (cause) { setError(cause instanceof Error ? cause.message : "Status gagal diperbarui") }
     }, 1500)
@@ -83,7 +86,7 @@ export function ToolWorkspace({ tool }: { tool: Pick<Tool, "slug" | "title" | "d
     {error && <Text role="alert" aria-live="assertive" color="red.fg">{error}</Text>}
     {state !== "Completed" && <Button colorPalette="teal" size="lg" onClick={process} loading={busy} disabled={busy || ["Queued", "Processing", "Uploading"].includes(state)}>Proses {tool.title}</Button>}
     {state !== "Siap" && <Box><Flex justify="space-between" mb="2"><Text fontWeight="medium">{state}</Text><Text>{progress}%</Text></Flex><Progress.Root value={progress} colorPalette="teal"><Progress.Track><Progress.Range /></Progress.Track></Progress.Root></Box>}
-    {state === "Completed" && job && <Button colorPalette="teal" size="lg" onClick={() => download(job.id, job.token)}>Unduh hasil</Button>}
+    {state === "Completed" && job && <Button colorPalette="teal" size="lg" onClick={() => download(job.id, job.token, job.outputName || files[0]?.name || "document.pdf")}>Unduh Dokumen</Button>}
   </Stack>
 }
 

@@ -1,4 +1,5 @@
 import json
+import logging
 import shutil
 import uuid
 
@@ -16,6 +17,7 @@ from .storage import Storage
 settings = get_settings()
 dramatiq.set_broker(RedisBroker(url=settings.redis_url))
 storage = Storage(settings.storage_root)
+logger = logging.getLogger(__name__)
 
 
 async def _process(job_id: str) -> None:
@@ -42,6 +44,8 @@ async def _process(job_id: str) -> None:
             if job.tool == "protect":
                 options.update(json.loads(secret_path.read_text(encoding="utf-8")))
             options["GhostscriptBinary"] = settings.ghostscript_binary
+            job.progress = 35
+            await session.commit()
             if job.tool == "merge":
                 merge(inputs, output, options, settings.subprocess_timeout_seconds)
             elif job.tool == "split":
@@ -84,11 +88,24 @@ async def _process(job_id: str) -> None:
             )
             await session.commit()
         except Exception as exc:
+            logger.exception(
+                "PDF job processing failed",
+                extra={
+                    "job_id": job_id,
+                    "tool": job.tool if job else "unknown",
+                    "exception_type": type(exc).__name__,
+                },
+            )
             await session.rollback()
             job = await session.get(Job, uuid.UUID(job_id))
             if job and job.status != JobStatus.CANCELLED:
                 job.status = JobStatus.FAILED
-                job.error_code = str(exc) if str(exc).isupper() else "PROCESSING_FAILED"
+                diagnostic = str(exc)
+                job.error_code = (
+                    diagnostic[:64]
+                    if diagnostic in {"INVALID_IMAGE", "INVALID_PAGE_SIZE"}
+                    else "PROCESSING_FAILED"
+                )
                 job.lease_owner = None
                 job.lease_expires_at = None
                 session.add(

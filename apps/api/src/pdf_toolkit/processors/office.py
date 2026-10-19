@@ -1,3 +1,4 @@
+import tempfile
 from pathlib import Path
 
 from .common import run_command
@@ -12,22 +13,24 @@ def office_to_pdf(source: Path, output_dir: Path, binary: str, timeout: int) -> 
     else:
         export_filter = "pdf:writer_pdf_Export"
 
-    run_command(
-        [
-            binary,
-            "--headless",
-            "--nologo",
-            "--nodefault",
-            "--nofirststartwizard",
-            "--convert-to",
-            export_filter,
-            "--outdir",
-            str(output_dir),
-            str(source),
-        ],
-        timeout,
-        output_dir,
-    )
+    with tempfile.TemporaryDirectory(prefix="libreoffice-profile-") as profile:
+        run_command(
+            [
+                binary,
+                f"-env:UserInstallation={Path(profile).resolve().as_uri()}",
+                "--headless",
+                "--nologo",
+                "--nodefault",
+                "--nofirststartwizard",
+                "--convert-to",
+                export_filter,
+                "--outdir",
+                str(output_dir),
+                str(source),
+            ],
+            timeout,
+            output_dir,
+        )
     output = output_dir / f"{source.stem}.pdf"
     if not output.is_file():
         pdfs = sorted(output_dir.glob("*.pdf"), key=lambda p: p.stat().st_mtime, reverse=True)

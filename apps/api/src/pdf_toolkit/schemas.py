@@ -60,6 +60,7 @@ class JobResponse(Model):
     tool: str
     status: str
     progress: int
+    stage: str | None
     files: list[FileInfo]
     output_name: str | None
     output_size: int | None

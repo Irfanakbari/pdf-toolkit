@@ -1,5 +1,6 @@
 import os
 import tempfile
+from collections.abc import Callable
 from pathlib import Path
 
 import img2pdf
@@ -9,16 +10,32 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 from ..ranges import parse_ranges
 from .common import run_command
 
+ProgressCallback = Callable[[int, int], None]
 
-def merge(inputs: list[Path], output: Path, _: dict, __: int) -> None:
+
+def merge(
+    inputs: list[Path],
+    output: Path,
+    _: dict,
+    __: int,
+    progress: ProgressCallback | None = None,
+) -> None:
     target = pikepdf.Pdf.new()
-    for source in inputs:
+    for index, source in enumerate(inputs, 1):
         with pikepdf.open(source) as pdf:
             target.pages.extend(pdf.pages)
+        if progress:
+            progress(index, len(inputs))
     target.save(output)
 
 
-def split(inputs: list[Path], output_dir: Path, options: dict, _: int) -> list[Path]:
+def split(
+    inputs: list[Path],
+    output_dir: Path,
+    options: dict,
+    _: int,
+    progress: ProgressCallback | None = None,
+) -> list[Path]:
     outputs = []
     with pikepdf.open(inputs[0]) as source:
         groups = parse_ranges(str(options.get("Ranges", "1-")), len(source.pages))
@@ -29,10 +46,18 @@ def split(inputs: list[Path], output_dir: Path, options: dict, _: int) -> list[P
             destination = output_dir / f"part-{index}.pdf"
             target.save(destination)
             outputs.append(destination)
+            if progress:
+                progress(index, len(groups))
     return outputs
 
 
-def images_to_pdf(inputs: list[Path], output: Path, options: dict, _: int) -> None:
+def images_to_pdf(
+    inputs: list[Path],
+    output: Path,
+    options: dict,
+    _: int,
+    progress: ProgressCallback | None = None,
+) -> None:
     page_size = str(options.get("PageSize", "A4"))
     page_sizes = {
         "A4": (img2pdf.mm_to_pt(210), img2pdf.mm_to_pt(297)),
@@ -42,10 +67,11 @@ def images_to_pdf(inputs: list[Path], output: Path, options: dict, _: int) -> No
         raise ValueError("INVALID_PAGE_SIZE")
     output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="image-to-pdf-", dir=output.parent) as work_dir:
-        processed = [
-            str(_normalize_image(source, Path(work_dir) / f"page-{index}.jpg"))
-            for index, source in enumerate(inputs)
-        ]
+        processed = []
+        for index, source in enumerate(inputs, 1):
+            processed.append(str(_normalize_image(source, Path(work_dir) / f"page-{index}.jpg")))
+            if progress:
+                progress(index, len(inputs))
         layout = img2pdf.get_layout_fun(
             pagesize=page_sizes[page_size],
             fit=img2pdf.FitMode.into,
@@ -140,4 +166,3 @@ def unlock(inputs: list[Path], output: Path, options: dict, _: int) -> None:
             pdf.save(output)
     except pikepdf.PasswordError as exc:
         raise ValueError("INVALID_PASSWORD") from exc
-

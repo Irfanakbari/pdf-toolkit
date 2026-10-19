@@ -29,27 +29,43 @@ export function ToolWorkspace({
   const [job, setJob] = useState<{ id: string; token: string; outputName?: string }>()
   const [state, setState] = useState("Ready")
   const [progress, setProgress] = useState(0)
+  const [stage, setStage] = useState("Ready")
   const [error, setError] = useState("")
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
     if (!job || !["Queued", "Processing", "Uploading"].includes(state)) return
-    const timer = window.setInterval(async () => {
+    let cancelled = false
+    let timer: number | undefined
+    const poll = async () => {
       try {
         const current = await status(job.id, job.token)
+        if (cancelled) return
         setState(current.Status)
-        setProgress(current.Progress)
+        setStage(current.Stage ?? current.Status)
+        setProgress((previous) => Math.max(previous, current.Progress))
         if (current.OutputName) {
           setJob((prev) => (prev ? { ...prev, outputName: current.OutputName } : prev))
         }
         if (current.Status === "Failed") {
-          setError(`Processing failed (${current.ErrorCode ?? "unknown error"})`)
+          setError(`${current.Stage ?? "Processing"} failed (${current.ErrorCode ?? "unknown error"})`)
+          return
+        }
+        if (!["Completed", "Cancelled", "Expired"].includes(current.Status)) {
+          timer = window.setTimeout(poll, 750 + Math.round(Math.random() * 450))
         }
       } catch (cause) {
-        setError(cause instanceof Error ? cause.message : "Failed to retrieve status")
+        if (!cancelled) {
+          setError(cause instanceof Error ? cause.message : "Failed to retrieve status")
+          timer = window.setTimeout(poll, 1200)
+        }
       }
-    }, 1500)
-    return () => clearInterval(timer)
+    }
+    timer = window.setTimeout(poll, 750)
+    return () => {
+      cancelled = true
+      if (timer) window.clearTimeout(timer)
+    }
   }, [job, state])
 
   function pick(event: ChangeEvent<HTMLInputElement>) {
@@ -73,9 +89,10 @@ export function ToolWorkspace({
       const created = await createJob(tool.slug)
       setJob({ id: created.JobId, token: created.CapabilityToken })
       setState("Uploading")
+      setStage("Uploading")
       for (let index = 0; index < files.length; index++) {
         await upload(created.JobId, created.CapabilityToken, files[index])
-        setProgress(Math.round(((index + 1) / files.length) * 30))
+        setProgress((previous) => Math.max(previous, Math.round(((index + 1) / files.length) * 20)))
       }
       const options: Record<string, string> = {}
       if (tool.option === "ranges") options.Ranges = option || "1-"
@@ -84,7 +101,8 @@ export function ToolWorkspace({
       if (tool.option === "pageSize") options.PageSize = option || "A4"
       const queued = await submit(created.JobId, created.CapabilityToken, options)
       setState(queued.Status)
-      setProgress(queued.Progress)
+      setStage(queued.Stage ?? "Queued")
+      setProgress((previous) => Math.max(previous, 22, queued.Progress))
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "An unexpected error occurred")
       setState("Failed")
@@ -199,7 +217,7 @@ export function ToolWorkspace({
       {state !== "Ready" && (
         <Box>
           <Flex justify="space-between" mb="2">
-            <Text fontWeight="medium">{state}</Text>
+            <Text fontWeight="medium">{stage}</Text>
             <Text>{progress}%</Text>
           </Flex>
           <Progress.Root value={progress} colorPalette="teal">

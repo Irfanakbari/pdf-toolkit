@@ -16,3 +16,7 @@ input,
 select {
   font: inherit;
 }
+
+[role="progressbar"] > div > div {
+  transition: width 500ms ease-out;
+}

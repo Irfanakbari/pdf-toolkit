@@ -5,7 +5,7 @@ import pytest
 from PIL import Image
 
 from pdf_toolkit.processors.pdf import images_to_pdf, merge, split
-from pdf_toolkit.tasks import output_name
+from pdf_toolkit.tasks import output_name, publish_output, validate_output
 
 
 def create_pdf(path: Path, pages: int):
@@ -53,6 +53,29 @@ def test_output_name_preserves_uploaded_basename():
     assert output_name("split", "") == "document.zip"
 
 
+def test_validate_and_publish_output(tmp_path, monkeypatch):
+    source = tmp_path / "source.pdf"
+    create_pdf(source, 1)
+    validate_output(source, ".pdf")
+
+    destination = tmp_path / "nas" / "result.pdf"
+    monkeypatch.setattr("pdf_toolkit.tasks.storage.root", tmp_path.resolve())
+    assert publish_output(source, destination) == source.stat().st_size
+    validate_output(destination, ".pdf")
+
+
+def test_validate_output_rejects_invalid_files(tmp_path):
+    invalid_pdf = tmp_path / "invalid.pdf"
+    invalid_pdf.write_bytes(b"not a pdf")
+    with pytest.raises(pikepdf.PdfError):
+        validate_output(invalid_pdf, ".pdf")
+
+    invalid_office = tmp_path / "invalid.docx"
+    invalid_office.write_bytes(b"not an office container")
+    with pytest.raises(RuntimeError, match="INVALID_OUTPUT"):
+        validate_output(invalid_office, ".docx")
+
+
 def test_images_to_pdf_rejects_decompression_bomb(tmp_path, monkeypatch):
     source = tmp_path / "large.png"
     Image.new("RGB", (20, 20), "white").save(source)
@@ -94,4 +117,3 @@ def test_pdf_to_powerpoint_and_excel(tmp_path):
 
     assert xlsx.is_file() and xlsx.stat().st_size > 0
     assert pptx.is_file() and pptx.stat().st_size > 0
-

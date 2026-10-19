@@ -4,6 +4,7 @@ export type Job = {
   JobId: string
   Status: string
   Progress: number
+  Stage?: string
   OutputName?: string
   ErrorCode?: string
 }

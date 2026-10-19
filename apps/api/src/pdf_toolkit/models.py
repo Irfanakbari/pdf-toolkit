@@ -35,6 +35,7 @@ class Job(Base):
     output_name: Mapped[str | None] = mapped_column(String(255))
     output_size: Mapped[int | None] = mapped_column(BigInteger)
     progress: Mapped[int] = mapped_column(Integer, default=0)
+    stage: Mapped[str | None] = mapped_column(String(64))
     error_code: Mapped[str | None] = mapped_column(String(64))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)

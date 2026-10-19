@@ -1,5 +1,6 @@
 import io
 import logging
+from collections.abc import Callable
 from pathlib import Path
 
 import fitz  # PyMuPDF
@@ -10,6 +11,7 @@ from pptx import Presentation
 from pptx.util import Inches
 
 logger = logging.getLogger(__name__)
+ProgressCallback = Callable[[int, int], None]
 
 
 def pdf_to_word(source: Path, output: Path) -> None:
@@ -20,7 +22,7 @@ def pdf_to_word(source: Path, output: Path) -> None:
         cv.close()
 
 
-def pdf_to_excel(source: Path, output: Path) -> None:
+def pdf_to_excel(source: Path, output: Path, progress: ProgressCallback | None = None) -> None:
     wb = openpyxl.Workbook()
     # Remove default sheet
     default_sheet = wb.active
@@ -49,6 +51,8 @@ def pdf_to_excel(source: Path, output: Path) -> None:
                     row_cursor += 1
                 if lines:
                     has_data = True
+            if progress:
+                progress(idx, len(pdf.pages))
 
     if default_sheet and default_sheet in wb.worksheets:
         wb.remove(default_sheet)
@@ -60,11 +64,11 @@ def pdf_to_excel(source: Path, output: Path) -> None:
     wb.save(output)
 
 
-def pdf_to_powerpoint(source: Path, output: Path) -> None:
+def pdf_to_powerpoint(source: Path, output: Path, progress: ProgressCallback | None = None) -> None:
     prs = Presentation()
     doc = fitz.open(source)
     try:
-        for page in doc:
+        for index, page in enumerate(doc, 1):
             # Render page to image at 150 DPI for balance of sharpness and memory
             pix = page.get_pixmap(dpi=150)
             img_bytes = pix.tobytes("png")
@@ -84,6 +88,8 @@ def pdf_to_powerpoint(source: Path, output: Path) -> None:
             slide.shapes.add_picture(
                 image_stream, left=0, top=0, width=slide_width, height=slide_height
             )
+            if progress:
+                progress(index, len(doc))
     finally:
         doc.close()
 

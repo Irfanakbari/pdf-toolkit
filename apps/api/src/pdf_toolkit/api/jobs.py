@@ -69,6 +69,7 @@ def response(job: Job) -> JobResponse:
         tool=job.tool,
         status=job.status.value,
         progress=job.progress,
+        stage=job.stage,
         files=job.files,
         output_name=job.output_name,
         output_size=job.output_size,
@@ -94,12 +95,12 @@ async def upload_file(
     session: AsyncSession = Depends(get_session),
 ):
     if job.status not in {JobStatus.CREATED, JobStatus.UPLOADING}:
-        raise HTTPException(
-            409, detail={"Code": "INVALID_STATE", "Message": "Upload is closed"}
-        )
+        raise HTTPException(409, detail={"Code": "INVALID_STATE", "Message": "Upload is closed"})
     files = list(job.files)
     if len(files) >= 20:
-        raise HTTPException(413, detail={"Code": "TOO_MANY_FILES", "Message": "Maximum 20 files allowed"})
+        raise HTTPException(
+            413, detail={"Code": "TOO_MANY_FILES", "Message": "Maximum 20 files allowed"}
+        )
     name = secure_name(file.filename or "file")
     stored = f"{uuid.uuid4().hex}_{name}"
     destination = storage.file(job.id, job.created_at, "input", stored)
@@ -158,7 +159,10 @@ async def submit(
         if not isinstance(password, str) or not min_len <= len(password) <= 128:
             raise HTTPException(
                 422,
-                detail={"Code": "INVALID_PASSWORD", "Message": f"Password must be at least {min_len} characters"},
+                detail={
+                    "Code": "INVALID_PASSWORD",
+                    "Message": f"Password must be at least {min_len} characters",
+                },
             )
         secret_path = storage.file(job.id, job.created_at, "work", "protect-options.json")
         storage.atomic_write_bytes(
@@ -169,12 +173,22 @@ async def submit(
     job.options = options
     job.status = JobStatus.QUEUED
     job.progress = 5
+    job.stage = "Queued"
     session.add(JobLog(job_id=job.id, level="info", event="queued", message="Job queued"))
     await session.commit()
-    (process_office if job.tool in {
-        "docx-to-pdf", "excel-to-pdf", "powerpoint-to-pdf",
-        "pdf-to-word", "pdf-to-excel", "pdf-to-powerpoint",
-    } else process_pdf).send(str(job.id))
+    (
+        process_office
+        if job.tool
+        in {
+            "docx-to-pdf",
+            "excel-to-pdf",
+            "powerpoint-to-pdf",
+            "pdf-to-word",
+            "pdf-to-excel",
+            "pdf-to-powerpoint",
+        }
+        else process_pdf
+    ).send(str(job.id))
     return response(job)
 
 

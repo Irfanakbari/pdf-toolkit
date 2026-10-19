@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 
 from .config import get_settings
-from .database import SessionLocal
+from .database import WorkerSessionLocal
 from .models import Job, JobStatus
 from .storage import Storage
 
@@ -12,7 +12,7 @@ async def cleanup() -> int:
     settings = get_settings()
     storage = Storage(settings.storage_root)
     count = 0
-    async with SessionLocal() as session:
+    async with WorkerSessionLocal() as session:
         now = datetime.now(UTC)
         jobs = (
             await session.scalars(

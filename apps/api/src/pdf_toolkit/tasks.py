@@ -17,7 +17,7 @@ from dramatiq.brokers.redis import RedisBroker
 from sqlalchemy import select
 
 from .config import get_settings
-from .database import SessionLocal
+from .database import WorkerSessionLocal
 from .models import Job, JobLog, JobStatus
 from .processors.office import office_to_pdf
 from .processors.pdf import compress, grayscale, images_to_pdf, merge, protect, split, unlock
@@ -56,7 +56,7 @@ class ProgressReporter:
             return False
         if not force and now - self.last_write < self.minimum_interval:
             return False
-        async with SessionLocal() as session:
+        async with WorkerSessionLocal() as session:
             job = await session.get(Job, self.job_id)
             if not job or job.status == JobStatus.CANCELLED:
                 return False
@@ -71,7 +71,7 @@ class ProgressReporter:
 
 
 async def _cancelled(job_id: uuid.UUID) -> bool:
-    async with SessionLocal() as session:
+    async with WorkerSessionLocal() as session:
         job = await session.get(Job, job_id)
         return not job or job.status == JobStatus.CANCELLED
 
@@ -140,7 +140,7 @@ async def _process(job_id: str) -> None:
     secret_path: Path | None = None
     job: Job | None = None
     try:
-        async with SessionLocal() as session:
+        async with WorkerSessionLocal() as session:
             job = await session.scalar(select(Job).where(Job.id == identifier).with_for_update())
             if not job or job.status != JobStatus.QUEUED:
                 return
@@ -246,7 +246,7 @@ async def _process(job_id: str) -> None:
             destination = storage.file(identifier, created_at, "output", output.name)
             output_size = await asyncio.to_thread(publish_output, output, destination)
 
-        async with SessionLocal() as session:
+        async with WorkerSessionLocal() as session:
             current = await session.get(Job, identifier)
             if not current or current.status == JobStatus.CANCELLED:
                 return
@@ -277,7 +277,7 @@ async def _process(job_id: str) -> None:
                 "exception_type": type(exc).__name__,
             },
         )
-        async with SessionLocal() as session:
+        async with WorkerSessionLocal() as session:
             current = await session.get(Job, identifier)
             if current and current.status != JobStatus.CANCELLED:
                 current.status = JobStatus.FAILED

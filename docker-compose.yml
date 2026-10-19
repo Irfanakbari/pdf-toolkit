@@ -59,7 +59,9 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-      args: { NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-http://localhost:8000}" }
+      args:
+        NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-/pdf-tools/backend}"
+        API_PROXY_TARGET: "http://api:8000"
     ports: ["127.0.0.1:3000:3000"]
     depends_on: { api: { condition: service_healthy } }
     restart: unless-stopped

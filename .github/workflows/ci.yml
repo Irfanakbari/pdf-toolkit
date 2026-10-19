@@ -41,7 +41,7 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm build
         env:
-          NEXT_PUBLIC_API_URL: http://10.10.10.110:8000
+          NEXT_PUBLIC_API_URL: /pdf-tools/backend
 
   compose:
     runs-on: ubuntu-latest

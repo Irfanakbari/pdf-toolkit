@@ -7,8 +7,10 @@ RUN pnpm install --filter @pdf-toolkit/web... --frozen-lockfile
 
 FROM deps AS build
 COPY apps/web apps/web
-ARG NEXT_PUBLIC_API_URL=http://localhost:8000
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_API_URL=/pdf-tools/backend
+ARG API_PROXY_TARGET=http://api:8000
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
+    API_PROXY_TARGET=$API_PROXY_TARGET
 RUN pnpm --filter @pdf-toolkit/web build
 
 FROM node:22-alpine AS runtime

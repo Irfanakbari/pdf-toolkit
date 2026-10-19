@@ -55,7 +55,8 @@ jobs:
           push: true
           tags: ${{ steps.images.outputs.web_image }}
           build-args: |
-            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'http://10.10.10.110:8000' }}
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || '/pdf-tools/backend' }}
+            API_PROXY_TARGET=${{ vars.API_PROXY_TARGET || 'http://api:8000' }}
           cache-from: type=gha,scope=web
           cache-to: type=gha,mode=max,scope=web
 

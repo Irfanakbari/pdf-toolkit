@@ -1,4 +1,4 @@
-const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
+const base = process.env.NEXT_PUBLIC_API_URL ?? "/pdf-tools/backend"
 
 export type Job = {
   JobId: string
@@ -10,32 +10,33 @@ export type Job = {
 }
 
 type Created = { JobId: string; CapabilityToken: string }
+type RequestStage = "create job" | "upload file" | "submit job" | "retrieve status" | "download result"
 
 const headers = (token: string) => ({ "X-Capability-Token": token })
 
-async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
+async function apiFetch(path: string, stage: RequestStage, init?: RequestInit): Promise<Response> {
   try {
     return await fetch(`${base}${path}`, init)
   } catch (cause) {
     const detail = cause instanceof Error ? cause.message : "Network connection failed"
-    throw new Error(`Cannot connect to the PDF processing API at ${base}. Check network access and CORS settings. (${detail})`)
+    throw new Error(`Unable to ${stage}. The connection to the PDF processing service was interrupted. (${detail})`)
   }
 }
 
 export async function createJob(tool: string): Promise<Created> {
-  const response = await apiFetch("/api/v1/jobs", {
+  const response = await apiFetch("/api/v1/jobs", "create job", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ Tool: tool }),
   })
-  return checked(response)
+  return checked<Created>(response)
 }
 
 export async function upload(jobId: string, token: string, file: File) {
   const data = new FormData()
   data.append("file", file)
-  return checked(
-    await apiFetch(`/api/v1/jobs/${jobId}/files`, {
+  return checked<Job>(
+    await apiFetch(`/api/v1/jobs/${jobId}/files`, "upload file", {
       method: "POST",
       headers: headers(token),
       body: data,
@@ -44,8 +45,8 @@ export async function upload(jobId: string, token: string, file: File) {
 }
 
 export async function submit(jobId: string, token: string, options: Record<string, string>) {
-  return checked(
-    await apiFetch(`/api/v1/jobs/${jobId}/submit`, {
+  return checked<Job>(
+    await apiFetch(`/api/v1/jobs/${jobId}/submit`, "submit job", {
       method: "POST",
       headers: { ...headers(token), "Content-Type": "application/json" },
       body: JSON.stringify({ Options: options }),
@@ -54,8 +55,8 @@ export async function submit(jobId: string, token: string, options: Record<strin
 }
 
 export async function status(jobId: string, token: string): Promise<Job> {
-  return checked(
-    await apiFetch(`/api/v1/jobs/${jobId}`, {
+  return checked<Job>(
+    await apiFetch(`/api/v1/jobs/${jobId}`, "retrieve status", {
       headers: headers(token),
       cache: "no-store",
     }),
@@ -67,10 +68,10 @@ export async function download(
   token: string,
   jobOrFallback?: { OutputName?: string } | string,
 ) {
-  const response = await apiFetch(`/api/v1/jobs/${jobId}/download`, {
+  const response = await apiFetch(`/api/v1/jobs/${jobId}/download`, "download result", {
     headers: headers(token),
   })
-  if (!response.ok) throw new Error("Download failed")
+  if (!response.ok) throw new Error("Unable to download the processed document")
   const blob = await response.blob()
   const url = URL.createObjectURL(blob)
   const link = document.createElement("a")
@@ -80,16 +81,13 @@ export async function download(
   let filename = ""
   if (disposition) {
     const match = disposition.match(/filename\*?=(?:UTF-8'')?["']?([^"';]+)["']?/i)
-    if (match?.[1]) {
-      filename = decodeURIComponent(match[1].trim())
-    }
+    if (match?.[1]) filename = decodeURIComponent(match[1].trim())
   }
 
   const fallback =
     typeof jobOrFallback === "string"
       ? jobOrFallback
       : (jobOrFallback?.OutputName || "")
-
   let chosen = filename || fallback || "document.pdf"
 
   const contentType = response.headers.get("content-type") || ""
@@ -110,10 +108,19 @@ export async function download(
   URL.revokeObjectURL(url)
 }
 
-async function checked(response: Response) {
-  const data = await response.json()
-  if (!response.ok) {
-    throw new Error(data.Error?.Message ?? data.detail?.Message ?? "Request failed")
+async function checked<T>(response: Response): Promise<T> {
+  let data: Record<string, unknown>
+  try {
+    data = (await response.json()) as Record<string, unknown>
+  } catch {
+    if (!response.ok) throw new Error(`Processing API returned HTTP ${response.status}`)
+    throw new Error("Processing API returned an invalid response")
   }
-  return data
+  if (!response.ok) {
+    const errorObj = data.Error as { Message?: string } | undefined
+    const detailObj = data.detail as { Message?: string } | undefined
+    const msg = errorObj?.Message ?? detailObj?.Message ?? `Request failed with HTTP ${response.status}`
+    throw new Error(msg)
+  }
+  return data as T
 }

@@ -18,5 +18,5 @@ select {
 }
 
 [role="progressbar"] > div > div {
-  transition: width 500ms ease-out;
+  transition: width 1200ms cubic-bezier(0.22, 1, 0.36, 1);
 }

@@ -11,10 +11,8 @@ import {
   Minimize2,
   PanelsTopLeft,
   Presentation,
-  RotateCw,
   Stamp,
   SunMedium,
-  Trash2,
   Unlock,
 } from "lucide-react"
 
@@ -38,7 +36,7 @@ export const tools: Tool[] = [
   {
     slug: "organize",
     title: "Organize & Edit PDF",
-    description: "Rearrange, rotate, and delete PDF pages directly in your browser.",
+    description: "Rearrange, rotate, and delete PDF pages in one complete visual editor.",
     accept: "application/pdf,.pdf",
     multiple: false,
     category: "organize",
@@ -66,28 +64,6 @@ export const tools: Tool[] = [
     colorPalette: "orange",
     option: "ranges",
     icon: Files,
-  },
-  {
-    slug: "rotate-pdf",
-    title: "Rotate PDF",
-    description: "Rotate your PDF pages 90°, 180°, or 270° for all or specific pages.",
-    accept: "application/pdf,.pdf",
-    multiple: false,
-    category: "organize",
-    colorPalette: "blue",
-    local: true,
-    icon: RotateCw,
-  },
-  {
-    slug: "delete-pages",
-    title: "Delete Pages",
-    description: "Remove unwanted pages or custom page ranges from your PDF file.",
-    accept: "application/pdf,.pdf",
-    multiple: false,
-    category: "organize",
-    colorPalette: "red",
-    local: true,
-    icon: Trash2,
   },
   {
     slug: "excel-to-pdf",
